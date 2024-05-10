@@ -1,0 +1,49 @@
+syntax = "proto3";
+package common;
+import "common/common.proto";
+option go_package = "skatechain.org/api/pb/relayer";
+
+service Submission {
+  rpc SubmitTask(TaskSubmitRequest) returns (TaskSubmitReply) {}
+}
+
+// TODO: (next version) service for retrieval of verified task
+
+message TaskSubmitRequest {
+  Task task = 1;
+  common.OperatorSignature signature = 2;
+}
+
+enum TaskStatus {
+  // Invalid - not from operator or signature is invalid
+  REJECTED = 0;
+  // Taken - being aggregated with other operators signature
+  PROCESSING = 1;
+  // Quorum threshold is reached
+  ACCEPTED = 2;
+  // Quorum threshold is not reached in times
+  EXPIRED = 3;
+  // AVS confirmation finalized on mainnet
+  FINALIZED = 4;
+}
+
+// NOTE: (future versions) support for Solana, Sui, Aptos, etc...
+enum ChainType {
+  EVM = 0;
+}
+
+
+message Task {
+  uint32 taskId = 1;
+  string msg = 2;
+  string initiator = 3;
+  ChainType chainType = 4;
+  uint32 chainId = 5;
+  bytes hash = 6;
+}
+
+message TaskSubmitReply {
+	TaskStatus result = 1;
+  // TODO: (futures version) request_id to update individual operator on request status
+	// string request_id = 2;
+}

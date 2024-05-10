@@ -1,0 +1,11 @@
+## verify
+
+forge verify-contract 0x3EFb67B7DaB42d347C3546b6c10579e9C5F14c3f src/gateway/SkateGateway.sol:SkateGateway \
+--constructor-args $(cast abi-encode "constructor(address)" 0x786775c9ecB916bd7f5a59c150491871fCfCEe86) \
+--verifier-url $ARB_SEPOLIA_EXPLORER --etherscan-api-key $ARB_SEPOLIA_API_KEY
+
+## deploy
+
+forge script script/deploy.s.sol:DeployGateway --rpc-url $ARB_SEPOLIA_RPC \
+--verifier-url $ARB_SEPOLIA_EXPLORER --etherscan-api-key $ARB_SEPOLIA_API_KEY \
+--broadcast --verify -vvvv

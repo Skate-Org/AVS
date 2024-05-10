@@ -1,0 +1,47 @@
+environment: development
+
+##################################
+# Skate environment
+skate_chain_id: 5051 # Skate nollie-testnet
+skate_wss_rpc: wss://nollie-rpc.skatechain.org/socket
+skate_http_rpc: https://nollie-rpc.skatechain.org
+skate_app: 0x2968C1663B41Cc633540148c679f43136a4644Fc
+
+##################################
+# HoleSky environments
+
+http_rpc: https://rpc-holesky.rockx.com
+# http_rpc: https://holesky.drpc.org
+wss_rpc: wss://holesky.drpc.org
+## Skate
+main_chain_id: 17000 # Holesky testnet
+skate_avs: 0x5D592a255A4369982aA7Fb55C6CBc12c7103e5e4
+
+## Eigenlayer
+delegation_manager: 0xA44151489861Fe9e3055d95adC98FbD462B948e7
+strategy_manager: 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6
+avs_directory: 0x055733000064333CaDDbC92763c58BF0192fFeBf
+
+# Strategies
+strategy_stETH: 0x7D704507b76571a51d9caE8AdDAbBFd0ba0e63d3
+token_stETH: 0x3F1c547b21f65e10480dE3ad8E19fAAC46C95034
+# strategy_rETH: 0x3A8fBdf9e77DFc25d09741f51d3E181b25d0c4E0
+# token_rETH:
+# strategy_WETH: 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9
+# token_WETH:
+# strategy_mETH: 0xaccc5A86732BE85b5012e8614AF237801636F8e5
+# token_mETH:
+
+##################################
+# Skate Gateway
+# gateway:
+#   421614: # Arbitrum-sepolia
+#     http_rpc: https://arbitrum-sepolia.blockpi.network/v1/rpc/public
+#     address: 0xc1Eb0ffdb88c59A043ab5B4fBf200795Cd5Acd03
+
+##################################
+# AVS node spec compliance https://eigen.nethermind.io/docs/spec/intro
+eigen_metrics_ip_port_address: localhost:9090
+enable_metrics: true
+node_api_ip_port_address: localhost:9010
+enable_node_api: true

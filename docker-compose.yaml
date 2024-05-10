@@ -1,0 +1,11 @@
+services:
+  kms:
+    build:
+      context: .
+      dockerfile: kms/Dockerfile
+    image: ghcr.io/skate-org/skate-kms:${BUILD_TAG:-latest}
+  operator:
+    build:
+      context: .
+      dockerfile: operator/Dockerfile
+    image: ghcr.io/skate-org/skate-operator:${BUILD_TAG:-latest}
