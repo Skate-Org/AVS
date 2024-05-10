@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	bindingISkateAVS "skatechain.org/contracts/bindings/ISkateAVS"
-	"skatechain.org/lib/cmd"
-	"skatechain.org/lib/logging"
-	"skatechain.org/lib/on-chain/backend"
+	bindingISkateAVS "github.com/Skate-Org/AVS/contracts/bindings/ISkateAVS"
+	"github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 )
 
 func main() {

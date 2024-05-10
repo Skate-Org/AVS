@@ -3,7 +3,7 @@ package db
 import (
 	"os"
 
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 var (

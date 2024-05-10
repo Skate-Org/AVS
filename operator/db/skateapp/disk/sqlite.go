@@ -9,9 +9,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/ethereum/go-ethereum/common"
-	"skatechain.org/contracts/bindings/SkateApp"
-	"skatechain.org/lib/db"
-	config "skatechain.org/operator/db"
+	"github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
+	"github.com/Skate-Org/AVS/lib/db"
+	config "github.com/Skate-Org/AVS/operator/db"
 )
 
 var (

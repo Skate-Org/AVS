@@ -6,10 +6,10 @@ import (
 	"math/big"
 	"strings"
 
-	"skatechain.org/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
 	// "github.com/ethereum/go-ethereum/accounts/abi"
 
-	pb "skatechain.org/api/pb/relayer"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 )
 
 // Calculate the pack encoded data of a TaskData

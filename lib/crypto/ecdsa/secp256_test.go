@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"skatechain.org/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
 )
 
 func TestECDSA(t *testing.T) {

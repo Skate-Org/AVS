@@ -9,16 +9,16 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	pbCommon "skatechain.org/api/pb/common"
-	pb "skatechain.org/api/pb/relayer"
+	pbCommon "github.com/Skate-Org/AVS/api/pb/common"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 
-	bindingSkateApp "skatechain.org/contracts/bindings/SkateApp"
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/crypto/ecdsa"
-	"skatechain.org/lib/monitor"
-	"skatechain.org/lib/on-chain/avs"
-	"skatechain.org/lib/on-chain/backend"
-	skateappDb "skatechain.org/operator/db/skateapp/disk"
+	bindingSkateApp "github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/monitor"
+	"github.com/Skate-Org/AVS/lib/on-chain/avs"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	skateappDb "github.com/Skate-Org/AVS/operator/db/skateapp/disk"
 )
 
 // WARNING: Must run with wss rpc.

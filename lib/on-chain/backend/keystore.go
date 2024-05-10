@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
-	"skatechain.org/lib/crypto/ecdsa"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 const KeyStore = "keystore"

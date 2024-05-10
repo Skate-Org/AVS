@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/monitor"
-	"skatechain.org/lib/on-chain/backend"
-	"skatechain.org/lib/on-chain/network"
-	skateappDb "skatechain.org/operator/db/skateapp/disk"
-	operatorMonitor "skatechain.org/operator/monitor"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/monitor"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/network"
+	skateappDb "github.com/Skate-Org/AVS/operator/db/skateapp/disk"
+	operatorMonitor "github.com/Skate-Org/AVS/operator/monitor"
 )
 
 // TODO: decouple monitor from signing service

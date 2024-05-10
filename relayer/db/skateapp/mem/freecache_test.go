@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	pb "skatechain.org/api/pb/relayer"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 )
 
 // TestCacheMessage tests caching an entry.
@@ -12,7 +12,7 @@ func TestCacheMessage(t *testing.T) {
 	cache := NewCache(2 * 1024 * 1024)
 	entry := Message{
 		TaskId:    1,
-		Initiator: "123 Skatechain.org",
+		Initiator: "123 github.com/Skate-Org/AVS",
 		Message:   "Test Entry",
 		ChainType: pb.ChainType_EVM,
 		ChainId:   1,
@@ -40,7 +40,7 @@ func TestAppendSignature(t *testing.T) {
 	// Clear previous data
 	refEntry := Message{
 		TaskId:    1,
-		Initiator: "123 Skatechain.org",
+		Initiator: "123 github.com/Skate-Org/AVS",
 		Message:   "Test Entry",
 		ChainType: pb.ChainType_EVM,
 		ChainId:   1,
@@ -48,9 +48,9 @@ func TestAppendSignature(t *testing.T) {
 	key := GenKey(refEntry)
 
 	signatures := []Signature{
-		{Operator: "0x1_Skatechain.org", Signature: [65]byte{1}},
-		{Operator: "0x2_Skatechain.org", Signature: [65]byte{2}},
-		{Operator: "0x3_Skatechain.org", Signature: [65]byte{3}},
+		{Operator: "0x1_github.com/Skate-Org/AVS", Signature: [65]byte{1}},
+		{Operator: "0x2_github.com/Skate-Org/AVS", Signature: [65]byte{2}},
+		{Operator: "0x3_github.com/Skate-Org/AVS", Signature: [65]byte{3}},
 	}
 	for _, sig := range signatures {
 		if err := cache.AppendSignature(key, sig); err != nil {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 var logger = logging.NewLoggerWithConsoleWriter()

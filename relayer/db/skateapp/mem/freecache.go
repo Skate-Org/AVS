@@ -7,10 +7,10 @@ import (
 
 	"github.com/coocood/freecache"
 	"github.com/pkg/errors"
-	pb "skatechain.org/api/pb/relayer"
-	"skatechain.org/lib/crypto/ecdsa"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
 
-	config "skatechain.org/relayer/db"
+	config "github.com/Skate-Org/AVS/relayer/db"
 )
 
 type MemCache struct {

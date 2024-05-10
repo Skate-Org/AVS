@@ -3,8 +3,8 @@ environment: development
 ##################################
 # Skate environment
 skate_chain_id: 5051 # Skate nollie-testnet
-skate_wss_rpc: wss://nollie-rpc.skatechain.org/socket
-skate_http_rpc: https://nollie-rpc.skatechain.org
+skate_wss_rpc: wss://nollie-rpc.github.com/Skate-Org/AVS/socket
+skate_http_rpc: https://nollie-rpc.github.com/Skate-Org/AVS
 skate_app: 0x2968C1663B41Cc633540148c679f43136a4644Fc
 
 ##################################

@@ -4,9 +4,9 @@ package main
 import (
 	"context"
 
-	clicmd "skatechain.org/kms/cmd"
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/logging"
+	clicmd "github.com/Skate-Org/AVS/kms/cmd"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/logging"
 
 	figure "github.com/common-nighthawk/go-figure"
 )

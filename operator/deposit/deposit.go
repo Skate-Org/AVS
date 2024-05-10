@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	bindingIERC20 "skatechain.org/contracts/bindings/IERC20"
-	bindingIStrategyManager "skatechain.org/contracts/bindings/IStrategyManager"
-	"skatechain.org/lib/cmd"
-	"skatechain.org/lib/crypto/ecdsa"
-	"skatechain.org/lib/logging"
-	"skatechain.org/lib/on-chain/backend"
+	bindingIERC20 "github.com/Skate-Org/AVS/contracts/bindings/IERC20"
+	bindingIStrategyManager "github.com/Skate-Org/AVS/contracts/bindings/IStrategyManager"
+	"github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 )
 
 var logger = logging.NewLoggerWithConsoleWriter()

@@ -10,7 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	common "skatechain.org/api/pb/common"
+	common "github.com/Skate-Org/AVS/api/pb/common"
 	sync "sync"
 )
 

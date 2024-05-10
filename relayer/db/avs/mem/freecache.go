@@ -8,7 +8,7 @@ import (
 
 	"github.com/coocood/freecache"
 	"github.com/pkg/errors"
-	"skatechain.org/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
 )
 
 type MemCache struct {

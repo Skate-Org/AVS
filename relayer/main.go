@@ -4,9 +4,9 @@ package main
 import (
 	"context"
 
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/logging"
-	clicmd "skatechain.org/relayer/cmd"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/logging"
+	clicmd "github.com/Skate-Org/AVS/relayer/cmd"
 
 	figure "github.com/common-nighthawk/go-figure"
 	"github.com/spf13/viper"

@@ -4,17 +4,17 @@ package cmd
 import (
 	"math/big"
 
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/monitor"
-	"skatechain.org/lib/on-chain/backend"
-	"skatechain.org/operator/deposit"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/monitor"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/operator/deposit"
 )
 
 func depositToAvs() *cobra.Command {

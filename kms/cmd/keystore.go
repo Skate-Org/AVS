@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
-	"skatechain.org/lib/logging"
-	"skatechain.org/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

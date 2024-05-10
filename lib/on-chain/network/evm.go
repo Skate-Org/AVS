@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 
 	"github.com/ethereum/go-ethereum/common"
 )

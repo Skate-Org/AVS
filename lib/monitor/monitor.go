@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
-	"skatechain.org/lib/logging"
-	"skatechain.org/lib/on-chain/backend"
-	"skatechain.org/lib/on-chain/network"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/network"
 )
 
 var (

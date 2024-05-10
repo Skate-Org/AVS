@@ -1,7 +1,7 @@
 package api
 
 import (
-	pb "skatechain.org/api/pb/relayer"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 )
 
 func Uint32ToChainType(num uint32) pb.ChainType {

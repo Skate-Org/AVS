@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 func NewFileLogger(DbDir string, fileName string) *logging.Logger {

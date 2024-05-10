@@ -1,4 +1,4 @@
-module skatechain.org
+module github.com/Skate-Org/AVS
 
 go 1.21.8
 

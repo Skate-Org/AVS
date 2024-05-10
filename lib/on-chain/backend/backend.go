@@ -5,7 +5,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	elTxMgr "github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/ethereum/go-ethereum/common"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 // NOTE: add Skate specific logic for multichain ops in future versions,

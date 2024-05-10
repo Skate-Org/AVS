@@ -3,11 +3,11 @@ package cmd
 import (
 	"context"
 
-	"skatechain.org/lib/logging"
-	"skatechain.org/relayer/retrieve"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/relayer/retrieve"
 
 	"github.com/spf13/cobra"
-	libcmd "skatechain.org/lib/cmd"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 )
 
 func retrieveCmd() *cobra.Command {

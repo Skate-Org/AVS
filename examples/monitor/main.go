@@ -7,10 +7,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"skatechain.org/contracts/bindings/IERC20"
-	"skatechain.org/lib/monitor"
-	"skatechain.org/lib/on-chain/backend"
-	"skatechain.org/lib/on-chain/network"
+	"github.com/Skate-Org/AVS/contracts/bindings/IERC20"
+	"github.com/Skate-Org/AVS/lib/monitor"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/network"
 )
 
 // NOTE: example of USDC monitor service on [mainnet, polygon]

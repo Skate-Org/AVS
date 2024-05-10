@@ -7,14 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"skatechain.org/contracts/bindings/IAVSDirectory"
-	bindingIDelegationManager "skatechain.org/contracts/bindings/IDelegationManager"
-	"skatechain.org/contracts/bindings/ISkateAVS"
-	"skatechain.org/lib/cmd"
-	"skatechain.org/lib/crypto/ecdsa"
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/contracts/bindings/IAVSDirectory"
+	bindingIDelegationManager "github.com/Skate-Org/AVS/contracts/bindings/IDelegationManager"
+	"github.com/Skate-Org/AVS/contracts/bindings/ISkateAVS"
+	"github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/logging"
 
-	"skatechain.org/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 )
 
 var logger = logging.NewLoggerWithConsoleWriter()

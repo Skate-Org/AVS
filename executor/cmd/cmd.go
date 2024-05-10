@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"skatechain.org/lib/buildinfo"
-	libcmd "skatechain.org/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/buildinfo"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 )
 
 const VERSION = "0.0.0"

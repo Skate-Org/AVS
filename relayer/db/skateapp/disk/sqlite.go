@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
-	"skatechain.org/lib/db"
-	config "skatechain.org/relayer/db"
+	"github.com/Skate-Org/AVS/lib/db"
+	config "github.com/Skate-Org/AVS/relayer/db"
 
-	"skatechain.org/lib/logging"
+	"github.com/Skate-Org/AVS/lib/logging"
 )
 
 var (

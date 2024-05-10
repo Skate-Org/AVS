@@ -1,8 +1,8 @@
 package publish
 
 import (
-// avsMemcache "skatechain.org/relayer/db/avs/mem"
-// skateappMemcache "skatechain.org/relayer/db/skateapp/mem"
+// avsMemcache "github.com/Skate-Org/AVS/relayer/db/avs/mem"
+// skateappMemcache "github.com/Skate-Org/AVS/relayer/db/skateapp/mem"
 )
 
 var Verbose = true

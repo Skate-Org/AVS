@@ -1,6 +1,6 @@
 syntax = "proto3";
 package common;
-option go_package = "skatechain.org/api/pb/common";
+option go_package = "github.com/Skate-Org/AVS/api/pb/common";
 
 message OperatorSignature {
   string address = 1;

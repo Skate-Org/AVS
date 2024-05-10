@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"skatechain.org/lib/logging"
-	"skatechain.org/lib/on-chain/backend"
-	"skatechain.org/relayer/publish"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/relayer/publish"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	libcmd "skatechain.org/lib/cmd"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 )
 
 func publishCmd() *cobra.Command {

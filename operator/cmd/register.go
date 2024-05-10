@@ -6,17 +6,17 @@ import (
 	"math/big"
 	"time"
 
-	bindingIDelegationManager "skatechain.org/contracts/bindings/IDelegationManager"
-	"skatechain.org/lib/crypto/ecdsa"
-	"skatechain.org/lib/logging"
-	"skatechain.org/operator/register"
+	bindingIDelegationManager "github.com/Skate-Org/AVS/contracts/bindings/IDelegationManager"
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/operator/register"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	libcmd "skatechain.org/lib/cmd"
-	"skatechain.org/lib/on-chain/backend"
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 )
 
 func registerAvsCmd() *cobra.Command {
