@@ -6,10 +6,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/pkg/errors"
-	"google.golang.org/grpc"
 	"github.com/Skate-Org/AVS/api"
 	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 	bindingISkateAVS "github.com/Skate-Org/AVS/contracts/bindings/ISkateAVS"
@@ -18,9 +14,14 @@ import (
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/on-chain/avs"
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/network"
 	avsMemcache "github.com/Skate-Org/AVS/relayer/db/avs/mem"
 	skateappDb "github.com/Skate-Org/AVS/relayer/db/skateapp/disk"
 	skateappMemcache "github.com/Skate-Org/AVS/relayer/db/skateapp/mem"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -59,6 +60,15 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	config := s.ctx.Value("config").(*libcmd.EnvironmentConfig)
 	if Verbose {
 		retrieveLogger.Info("Got request", "payload", in)
+	}
+
+	if !network.IsSupported(uint32(in.Task.ChainType), in.Task.ChainId) {
+		if Verbose {
+			retrieveLogger.Info("Unsupported network!", "action", "ignored")
+		}
+		return &pb.TaskSubmitReply{
+			Result: pb.TaskStatus_REJECTED,
+		}, api.NewInvalidArgError("Unsupported network")
 	}
 
 	// Step 1: Verify the operator

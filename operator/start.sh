@@ -10,8 +10,8 @@ trap 'kill "${PIDs[@]}"; exit' SIGINT SIGTERM
 cd ..
 
 # Start each operator in the background
-for i in {1..48}; do
-    go run operator/main.go monitor --signer-config $i &
+for i in {1..37}; do
+    ./bin/operator monitor --signer-config $i --verbose false &
     # Store PID of the last background process
     PIDs+=($!)
 done

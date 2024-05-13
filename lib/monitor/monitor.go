@@ -47,10 +47,6 @@ func (m *Monitor) Start(processLog ProcessLogFunc) {
 	for chainID, addr := range m.contractAddrs {
 		go func(chainID network.ChainID, addr common.Address) {
 			defer wg.Done()
-
-			if Verbose {
-				Logger.Info("Listening on chain", "chainID", chainID)
-			}
 			backends := m.backends[chainID]
 			ctx := m.ctx[chainID]
 

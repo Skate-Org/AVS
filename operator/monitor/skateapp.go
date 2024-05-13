@@ -67,16 +67,14 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 					monitor.Logger.Info("Received TaskCreated event:",
 						"sender", task.Signer,
 						"msg", task.Message,
-						"chainId", task.ChainId, 
-            "chainType", task.ChainType,
+						"chainId", task.ChainId,
+						"chainType", task.ChainType,
 						"txHash", task.Raw.TxHash.Hex(),
 					)
 				}
-				if !network.IsSupported(task.ChainType) {
-					monitor.Logger.Info("Unsupported chain type", "chainType", task.ChainType, "action", "ignored")
+				if !network.IsSupported(task.ChainType, task.ChainId) {
+					monitor.Logger.Info("Unsupported network!", "action", "ignored")
 					continue
-				} else if monitor.Verbose {
-					monitor.Logger.Info("ChainType", "value", task.ChainType, "name", pb.ChainType_name[int32(task.ChainType)])
 				}
 				PostProcessLog(privateKey, task)
 			case err := <-watcher.Err():
@@ -98,9 +96,7 @@ func PostProcessLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkateApp.B
 	if err != nil {
 		return err
 	}
-	monitor.Logger.Info("Log dumped")
 	if privateKey != nil {
-		monitor.Logger.Info("Prepare broadcasting...")
 		err := signAndBroadcastLog(privateKey, bindingTask)
 		if err != nil {
 			return err
@@ -119,7 +115,6 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	if err != nil {
 		return err
 	}
-	monitor.Logger.Info("Signature", "sig", signature)
 
 	// Step 2: broad cast log over grpc server
 	conn, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
