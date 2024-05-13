@@ -62,7 +62,7 @@ func InitializeSkateApp() {
 	  operator     TEXT,
 	  signature    BLOB,
 
-    UNIQUE (taskId, chainType, chainId, signature)
+    UNIQUE (taskId, chainType, chainId, operator)
 	)`)
 
 	SkateAppDB.Exec(`CREATE TABLE IF NOT EXISTS ` + CompletedTaskSchema + ` (

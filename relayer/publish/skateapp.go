@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strconv"
 	"time"
 
 	pb "github.com/Skate-Org/AVS/api/pb/relayer"
@@ -12,6 +13,7 @@ import (
 	bindingSkateGateway "github.com/Skate-Org/AVS/contracts/bindings/SkateGateway"
 	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	libExec "github.com/Skate-Org/AVS/lib/exec"
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/on-chain/avs"
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
@@ -89,7 +91,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 	// Fetch pending tasks
 	tasks, err := fetchPendingTasks()
 	if err != nil {
-		relayerLogger.Error("Failed to fetch pending tasks", "error", err)
+		relayerLogger.Error("Failed to fetch pending tasks", "error", errors.Wrap(err, "submitTasksToAvs.fetchPendingTasks"))
 		return
 	}
 
@@ -103,6 +105,15 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		} else {
 			taskGroups[key] = []disk.SignedTask{task}
 		}
+		// digestHash := avs.TaskDigestHash(
+		// 	task.TaskId, task.Message, task.Initiator,
+		// 	pb.ChainType(task.ChainType), task.ChainId,
+		// )
+		// verified, err := ecdsa.Verify(common.HexToAddress(task.Operator), digestHash, [65]byte(task.Signature))
+		// if !verified || err != nil {
+		// 	relayerLogger.Error("Signature invalid!", "operator", task.Operator)
+		// }
+		// relayerLogger.Info("Signature verified!")
 	}
 
 	verifiedTasks := make([]VerifiedTask, 0)
@@ -114,15 +125,13 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		if !quorumReached {
 			continue
 		}
-
 		if Verbose {
 			relayerLogger.Info("Task approved for submission", "task key", key)
 		}
-		taskId := new(big.Int).SetUint64(uint64(key.TaskId))
 		task := taskGroup[0]
-		messageData := avs.TaskData(task.Message, task.Initiator, pb.ChainType_EVM, task.ChainId)
-		batchTaskId = append(batchTaskId, taskId)
-		batchMessageData = append(batchMessageData, messageData)
+
+		taskId := new(big.Int).SetUint64(uint64(task.TaskId))
+		messageData := avs.TaskData(task.Message, task.Initiator, pb.ChainType(task.ChainType), task.ChainId)
 
 		signatureTuples := make([]SignatureTuple, len(taskGroup))
 		for index, task := range taskGroup {
@@ -131,22 +140,15 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 				Signature: task.Signature,
 			}
 		}
-		// signatures must be sorted by address
+    // NOTE: db already ensure signatures are unique
+		// Signatures must be sorted by address IN ASCENDING ORDER.
 		sort.Slice(signatureTuples, func(i, j int) bool {
 			return signatureTuples[i].Operator.Big().Cmp(signatureTuples[j].Operator.Big()) < 0
 		})
 
-		// NOTE: hack to ensure tuple is unique, should be filter at db level
-		// Prevent the case where multiple process with the same operator running.
-		var uniqueSignatureTuples []SignatureTuple
-		uniqueSignatureTuples = append(uniqueSignatureTuples, signatureTuples[0]) // 100% len > 0
-
-		for i := 1; i < len(signatureTuples); i++ {
-			if signatureTuples[i].Operator.Big().Cmp(uniqueSignatureTuples[len(uniqueSignatureTuples)-1].Operator.Big()) != 0 {
-				uniqueSignatureTuples = append(uniqueSignatureTuples, signatureTuples[i])
-			}
-		}
-		batchSignatureTuples = append(batchSignatureTuples, uniqueSignatureTuples)
+		batchTaskId = append(batchTaskId, taskId)
+		batchMessageData = append(batchMessageData, messageData)
+		batchSignatureTuples = append(batchSignatureTuples, signatureTuples)
 
 		// NOTE: insert this verified task for subsequent publishing process.
 		verifiedTasks = append(verifiedTasks, VerifiedTask{
@@ -156,6 +158,19 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 			Initiator: task.Initiator,
 			Message:   task.Message,
 		})
+
+		// NOTE: verify individually in go routines to avoid failures.
+		// chainId := new(big.Int).SetUint64(config.MainChainId)
+		// avsTransactor, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
+		// _, err := avsContract.SubmitData(
+		// 	avsTransactor,
+		// 	taskId,
+		// 	messageData,
+		// 	uniqueSignatureTuples,
+		// )
+		// if err != nil {
+		// 	relayerLogger.Error("Failed to submit transaction", "error", errors.Wrap(err, "SkateAVS.SubmitData"))
+		// }
 	}
 
 	if len(batchTaskId) == 0 {
@@ -164,7 +179,14 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 
 	// Step 2: Publish batch verified tasks to the AVS
 	chainId := new(big.Int).SetUint64(config.MainChainId)
+	currentGasPrice, err := be.SuggestGasPrice(context.Background())
+	if err != nil {
+		relayerLogger.Info("Failed to suggest gas price:", "error", err)
+		return
+	}
+	aggressiveGas := new(big.Int).Div(currentGasPrice.Mul(currentGasPrice, big.NewInt(15)), big.NewInt(10))
 	avsTransactor, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
+	avsTransactor.GasPrice = aggressiveGas
 
 	// Step 2.1: simulate
 	transactorNoSend := *avsTransactor
@@ -219,6 +241,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		switch pb.ChainType(verifiedTask.ChainType) {
 		case pb.ChainType_EVM:
 			switch verifiedTask.ChainId {
+			// TODO: Integrate more chains
 			case 421614:
 				be, err := backend.NewBackend("https://arbitrum-sepolia.blockpi.network/v1/rpc/public")
 				if err != nil {
@@ -231,7 +254,9 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 					continue
 				}
 
-				relayerLogger.Info("Submitting message to Gateway", "chainID", verifiedTask.ChainId)
+				if Verbose {
+					relayerLogger.Info("Submitting message to Gateway...", "chainID", verifiedTask.ChainId)
+				}
 				tx, err := gatewayContract.PostMsg(
 					transactor,
 					big.NewInt(int64(verifiedTask.TaskId)),
@@ -245,13 +270,18 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 				if err != nil {
 					continue
 				}
-				relayerLogger.Info("Submitted to gateway, receipt:", "status", receipt.Status, "chainID", verifiedTask.ChainId)
-
+				if Verbose {
+					relayerLogger.Info("Submitted to gateway, receipt:", "status", receipt.Status, "chainID", verifiedTask.ChainId)
+				}
 				TASK_PUBLISHED = true
 			}
-			// TODO: integrate more chains
+
 		case pb.ChainType_SOLANA:
-			// TODO:
+			// NOTE: hacky method. For scaling up (processing 1Ms of address cross 1000s chains), use gRPC/raw TCP over Unix Sockets.
+			binary := "./solana_client/boxednode_client"
+			args := []string{"postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
+			libExec.ExecBin(time.Duration(15), binary, args...)
+			TASK_PUBLISHED = true
 
 		default:
 			relayerLogger.Error("Unsupported chain type, ignored")

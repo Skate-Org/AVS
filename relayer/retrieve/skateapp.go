@@ -58,9 +58,9 @@ func (s *submissionServer) Start() {
 
 func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitRequest) (*pb.TaskSubmitReply, error) {
 	config := s.ctx.Value("config").(*libcmd.EnvironmentConfig)
-	if Verbose {
-		retrieveLogger.Info("Got request", "payload", in)
-	}
+	// if Verbose {
+	// 	retrieveLogger.Info("Got request", "payload", in)
+	// }
 
 	if !network.IsSupported(uint32(in.Task.ChainType), in.Task.ChainId) {
 		if Verbose {
