@@ -41,9 +41,7 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 	sink := make(chan *bindingSkateApp.BindingSkateAppTaskCreated)
 	watcher, err := contract.WatchTaskCreated(watchOpts, sink, nil)
 	if err != nil {
-		if monitor.Verbose {
-			monitor.Logger.Error("Watcher initialization error: ", "error", err)
-		}
+		monitor.Logger.Error("Watcher initialization error: ", "error", err)
 		return err
 	}
 
@@ -117,19 +115,21 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	}
 
 	// Step 2: broad cast log over grpc server
-	conn, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(timeoutCtx, ":50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(),
+	)
+	defer conn.Close()
 	if err != nil {
 		if monitor.Verbose {
-			monitor.Logger.Fatal("Relayer server not found", "error", errors.Wrap(err, "signAndBroadcastLog"))
+			monitor.Logger.Error("Failed to connect to Relayer", "error", errors.Wrap(err, "signAndBroadcastLog"))
 		}
 		return err
 	}
-	defer conn.Close()
-	client := pb.NewSubmissionClient(conn)
 
-	// Contact the server and print out its response.
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	client := pb.NewSubmissionClient(conn)
 
 	// Create a new Task
 	task := &pb.Task{
@@ -154,7 +154,7 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 		Signature: signedMessage,
 	}
 
-	response, err := client.SubmitTask(ctx, request)
+	response, err := client.SubmitTask(timeoutCtx, request)
 	if err != nil && monitor.Verbose {
 		monitor.Logger.Error("Could not submit task", "error", err)
 		return err
