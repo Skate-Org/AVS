@@ -1,13 +1,10 @@
 package network
 
 import (
-	"context"
 	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/Skate-Org/AVS/lib/logging"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -24,42 +21,6 @@ type EVMChain struct {
 	DeployHeight  uint64         // Height that the portal contracts were deployed
 	IsEthereum    bool           // Whether this is the ethereum layer1 chain
 	BlockDuration time.Duration  // Block period of the chain
-}
-
-// Load loads the network configuration from the given path.
-func Load(path string) (Network, error) {
-	bz, err := os.ReadFile(path)
-	if err != nil {
-		return Network{}, errors.Wrap(err, "read network config file")
-	}
-
-	var net Network
-	if err := json.Unmarshal(bz, &net); err != nil {
-		return Network{}, errors.Wrap(err, "unmarshal network config file")
-	}
-
-	return net, nil
-}
-
-// Save saves the network configuration to the given path.
-func Save(ctx context.Context, network Network, path string) error {
-	logger := logging.NewLoggerWithConsoleWriter()
-	for _, chain := range network.Chains {
-		if chain.PortalAddress == (common.Address{}) {
-			logger.Warn("Netconf network.json portal address empty", "chain", chain.Name, "path", path)
-		}
-	}
-
-	bz, err := json.MarshalIndent(network, "", "  ")
-	if err != nil {
-		return errors.Wrap(err, "marshal network config file")
-	}
-
-	if err := os.WriteFile(path, bz, 0o600); err != nil {
-		return errors.Wrap(err, "write network config file")
-	}
-
-	return nil
 }
 
 type chainJSON struct {

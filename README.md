@@ -10,9 +10,38 @@ Built with target:
 
 # Pre-built packages
 
-## Operator:
+## Operator
 
-Images: [https://github.com/orgs/Skate-Org/packages/container/package/skate-operator](https://github.com/orgs/Skate-Org/packages/container/package/skate-operator)
+Packages: [https://github.com/orgs/Skate-Org/packages/container/package/skate-operator](https://github.com/orgs/Skate-Org/packages/container/package/skate-operator)
+
+### Set up
+
+1. Pull the image
+    ```bash
+    docker pull ghcr.io/skate-org/skate-kms:latest
+    ```
+
+2. Prepare:
+
+    - A geth compatible keystore file using "StandardScryptN" and "StandardScryptP" for encryption under `./keystore` folder.
+
+    - A YAML config for signer following this format:
+        ```yaml
+        address: [your_operator_addres]
+        passphrase: [passphrase_to_unlock_keystore]
+        ```
+
+### Run the image
+
+Once set up, run the docker image with
+
+```bash
+docker
+```
+
+## Key management system (KMS)
+
+Packages: [https://github.com/orgs/Skate-Org/packages/container/package/skate-kms](https://github.com/orgs/Skate-Org/packages/container/package/skate-kms)
 
 # From source
 

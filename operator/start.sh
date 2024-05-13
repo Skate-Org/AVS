@@ -1,16 +1,20 @@
 #!/bin/bash
 
-trap 'kill $PID1 $PID2 $PID3; exit' SIGINT SIGTERM
+# Array to hold PIDs
+declare -a PIDs
 
+# Function to kill all processes when the script receives a SIGINT or SIGTERM
+trap 'kill "${PIDs[@]}"; exit' SIGINT SIGTERM
+
+# Move up one directory
 cd ..
 
-go run operator/main.go monitor --signer-config 1 &
-PID1=$!
+# Start each operator in the background
+for i in {1..48}; do
+    go run operator/main.go monitor --signer-config $i &
+    # Store PID of the last background process
+    PIDs+=($!)
+done
 
-go run operator/main.go monitor --signer-config 2 &
-PID2=$!
-
-go run operator/main.go monitor --signer-config 3 &
-PID3=$!
-
-wait $PID1 $PID2 $PID3
+# Wait for all processes to exit
+wait "${PIDs[@]}"

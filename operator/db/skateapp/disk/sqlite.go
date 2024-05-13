@@ -8,10 +8,10 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
 	"github.com/Skate-Org/AVS/lib/db"
 	config "github.com/Skate-Org/AVS/operator/db"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -30,7 +30,6 @@ func init() {
 
 const TaskSchema = "Tasks"
 
-// NOTE: should contains chainType as well
 type Task struct {
 	TaskId    int64
 	Message   string
@@ -58,29 +57,31 @@ type bindingTask = bindingSkateApp.BindingSkateAppTaskCreated
 
 func task_dbToBinding(task *Task) *bindingTask {
 	return &bindingTask{
-		TaskId:   big.NewInt(task.TaskId),
-		Message:  task.Message,
-		Signer:   common.HexToAddress(task.Signer),
-		TaskHash: [32]byte(task.Hash),
-		Chain:    task.ChainId,
+		TaskId:    big.NewInt(task.TaskId),
+		Message:   task.Message,
+		Signer:    common.HexToAddress(task.Signer),
+		TaskHash:  [32]byte(task.Hash),
+		ChainId:   task.ChainId,
+		ChainType: task.ChainType,
 	}
 }
 
 func task_bindingToDb(task *bindingSkateApp.BindingSkateAppTaskCreated) *Task {
 	return &Task{
-		TaskId:  task.TaskId.Int64(),
-		Message: task.Message,
-		Signer:  task.Signer.Hex(),
-		Hash:    task.TaskHash[:],
-		ChainId: task.Chain,
+		TaskId:    task.TaskId.Int64(),
+		Message:   task.Message,
+		Signer:    task.Signer.Hex(),
+		Hash:      task.TaskHash[:],
+		ChainId:   task.ChainId,
+		ChainType: task.ChainType,
 	}
 }
 
 func SkateApp_InsertTask(bindingTask *bindingSkateApp.BindingSkateAppTaskCreated) error {
 	task := task_bindingToDb(bindingTask)
 	_, err := SkateAppDB.Exec(
-		"INSERT OR IGNORE INTO "+TaskSchema+" (taskId, message, signer, chainId, hash) VALUES (?, ?, ?, ?, ?)",
-		task.TaskId, task.Message, task.Signer, task.ChainId, task.Hash,
+		"INSERT OR IGNORE INTO "+TaskSchema+" (taskId, message, signer, chainId, hash, chainType) VALUES (?, ?, ?, ?, ?, ?)",
+		task.TaskId, task.Message, task.Signer, task.ChainId, task.Hash, task.ChainType,
 	)
 	if err != nil {
 		TaskLogger.Error("InsertTask failed", "task", task, "err", err)

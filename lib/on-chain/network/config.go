@@ -1,16 +1,14 @@
 package network
 
-const (
-	// Devnet = single-machine deployment, consist of multiple Docker containers.
-	Devnet NetworkID = "devnet"
-
-	Testnet NetworkID = "testnet"
-
-	Mainnet NetworkID = "mainnet"
+import (
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 )
 
-var supported = map[NetworkID]bool{
-	Devnet:  true,
-	Testnet: true,
-	Mainnet: true,
+func IsSupported(chainType uint32) bool {
+	switch chainType {
+	case uint32(pb.ChainType_EVM), uint32(pb.ChainType_SOLANA):
+		return true
+	default:
+		return false
+	}
 }

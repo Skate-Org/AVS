@@ -22,6 +22,8 @@ func TaskData(
 	chainId uint32,
 ) []byte {
 	switch chainType {
+	case pb.ChainType_SOLANA:
+		fallthrough
 	case pb.ChainType_EVM:
 		// Convert uint16 chainType to 2 bytes
 		chainTypeBytes := make([]byte, 2)
@@ -51,7 +53,7 @@ func TaskData(
 		return result
 
 	default:
-		panic("HashTask for unknown chain")
+		panic("ecdsa.TaskData: unsupported network!")
 	}
 }
 
@@ -63,13 +65,16 @@ func TaskDigestHash(
 	chainId uint32,
 ) []byte {
 	switch chainType {
+	case pb.ChainType_SOLANA:
+		fallthrough
 	case pb.ChainType_EVM:
 		buf32 := make([]byte, 32) // taskId is uint256 in avs contract
 		taskIdBytes := new(big.Int).SetUint64(uint64(taskId)).FillBytes(buf32)
 		msgBytes := TaskData(msg, initiator, chainType, chainId)
 
 		return ecdsa.Keccak256Message(taskIdBytes, msgBytes)
+
 	default:
-		panic("ecdsa.TaskDigestHash: not implemented!")
+		panic("ecdsa.TaskDigestHash: unsupported network!")
 	}
 }

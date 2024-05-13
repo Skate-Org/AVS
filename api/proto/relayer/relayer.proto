@@ -30,6 +30,7 @@ enum TaskStatus {
 // NOTE: (future versions) support for Solana, Sui, Aptos, etc...
 enum ChainType {
   EVM = 0;
+  SOLANA = 1;
 }
 
 

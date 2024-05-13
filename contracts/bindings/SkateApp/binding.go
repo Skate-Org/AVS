@@ -31,8 +31,8 @@ var (
 
 // BindingSkateAppMetaData contains all meta data concerning the BindingSkateApp contract.
 var BindingSkateAppMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createMsg\",\"inputs\":[{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chain\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getProof\",\"inputs\":[{\"name\":\"taskId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tasks\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"TaskCreated\",\"inputs\":[{\"name\":\"taskId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"taskHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"message\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"signer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"chain\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false}]",
-	Bin: "0x608060405234801561001057600080fd5b5060405161046638038061046683398101604081905261002f91610054565b600280546001600160a01b0319166001600160a01b0392909216919091179055610084565b60006020828403121561006657600080fd5b81516001600160a01b038116811461007d57600080fd5b9392505050565b6103d3806100936000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806311149ada146100465780638d97767214610078578063a7fcc6ab14610098575b600080fd5b61006661005436600461018d565b60009081526020819052604090205490565b60405190815260200160405180910390f35b61006661008636600461018d565b60006020819052908152604090205481565b6100ab6100a63660046101d5565b6100ad565b005b600060405180604001604052808481526020018363ffffffff168152509050806040516020016100dd91906102dd565b60405160208183030381529060405280519060200120600080600160008154809291906101099061032b565b9091555081526020810191909152604001600020556001805461012c9190610344565b7ff4334a6b82c42b3da48195ff8f637cc42e08d795f4df38d4313dbed7b00f201a6000806001805461015e9190610344565b815260200190815260200160002054853386604051610180949392919061035d565b60405180910390a2505050565b60006020828403121561019f57600080fd5b5035919050565b634e487b7160e01b600052604160045260246000fd5b803563ffffffff811681146101d057600080fd5b919050565b600080604083850312156101e857600080fd5b823567ffffffffffffffff8082111561020057600080fd5b818501915085601f83011261021457600080fd5b813581811115610226576102266101a6565b604051601f8201601f19908116603f0116810190838211818310171561024e5761024e6101a6565b8160405282815288602084870101111561026757600080fd5b82602086016020830137600060208483010152809650505050505061028e602084016101bc565b90509250929050565b6000815180845260005b818110156102bd576020818501810151868301820152016102a1565b506000602082860101526020601f19601f83011685010191505092915050565b6020815260008251604060208401526102f96060840182610297565b905063ffffffff60208501511660408401528091505092915050565b634e487b7160e01b600052601160045260246000fd5b60006001820161033d5761033d610315565b5060010190565b8181038181111561035757610357610315565b92915050565b8481526080602082015260006103766080830186610297565b6001600160a01b039490941660408301525063ffffffff919091166060909101529291505056fea2646970667358221220e0d047844d3f0e4da26488178e75f5f68ddf2f8f99c01168a7ac3bcaf24aca3464736f6c63430008140033",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createMsg\",\"inputs\":[{\"name\":\"message\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainType\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"chainId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getProof\",\"inputs\":[{\"name\":\"taskId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tasks\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"TaskCreated\",\"inputs\":[{\"name\":\"taskId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"taskHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"message\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"signer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"chainType\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"chainId\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"}],\"anonymous\":false}]",
+	Bin: "0x608060405234801561001057600080fd5b5060405161049b38038061049b83398101604081905261002f91610054565b600280546001600160a01b0319166001600160a01b0392909216919091179055610084565b60006020828403121561006657600080fd5b81516001600160a01b038116811461007d57600080fd5b9392505050565b610408806100936000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806311149ada1461004657806320d41de9146100785780638d9776721461008d575b600080fd5b61006661005436600461019c565b60009081526020819052604090205490565b60405190815260200160405180910390f35b61008b6100863660046101e4565b6100ad565b005b61006661009b36600461019c565b60006020819052908152604090205481565b600060405180606001604052808581526020018363ffffffff1681526020018463ffffffff168152509050806040516020016100e991906102fc565b60405160208183030381529060405280519060200120600080600160008154809291906101159061035a565b909155508152602081019190915260400160002055600180546101389190610373565b7f900c1bba72823a7d83b1db8670af9c73250734013566f7308581ee5044fffec66000806001805461016a9190610373565b8152602001908152602001600020548633878760405161018e95949392919061038c565b60405180910390a250505050565b6000602082840312156101ae57600080fd5b5035919050565b634e487b7160e01b600052604160045260246000fd5b803563ffffffff811681146101df57600080fd5b919050565b6000806000606084860312156101f957600080fd5b833567ffffffffffffffff8082111561021157600080fd5b818601915086601f83011261022557600080fd5b813581811115610237576102376101b5565b604051601f8201601f19908116603f0116810190838211818310171561025f5761025f6101b5565b8160405282815289602084870101111561027857600080fd5b82602086016020830137600060208483010152809750505050505061029f602085016101cb565b91506102ad604085016101cb565b90509250925092565b6000815180845260005b818110156102dc576020818501810151868301820152016102c0565b506000602082860101526020601f19601f83011685010191505092915050565b60208152600082516060602084015261031860808401826102b6565b9050602084015163ffffffff808216604086015280604087015116606086015250508091505092915050565b634e487b7160e01b600052601160045260246000fd5b60006001820161036c5761036c610344565b5060010190565b8181038181111561038657610386610344565b92915050565b85815260a0602082015260006103a560a08301876102b6565b6001600160a01b039590951660408301525063ffffffff928316606082015291166080909101529291505056fea2646970667358221220a2f753f59a7fcbefed901a007d956200a18e1de8414f09794496212c85aa10e364736f6c63430008140033",
 }
 
 // BindingSkateAppABI is the input ABI used to generate the binding from.
@@ -264,25 +264,25 @@ func (_BindingSkateApp *BindingSkateAppCallerSession) Tasks(arg0 *big.Int) ([32]
 	return _BindingSkateApp.Contract.Tasks(&_BindingSkateApp.CallOpts, arg0)
 }
 
-// CreateMsg is a paid mutator transaction binding the contract method 0xa7fcc6ab.
+// CreateMsg is a paid mutator transaction binding the contract method 0x20d41de9.
 //
-// Solidity: function createMsg(string message, uint32 chain) returns()
-func (_BindingSkateApp *BindingSkateAppTransactor) CreateMsg(opts *bind.TransactOpts, message string, chain uint32) (*types.Transaction, error) {
-	return _BindingSkateApp.contract.Transact(opts, "createMsg", message, chain)
+// Solidity: function createMsg(string message, uint32 chainType, uint32 chainId) returns()
+func (_BindingSkateApp *BindingSkateAppTransactor) CreateMsg(opts *bind.TransactOpts, message string, chainType uint32, chainId uint32) (*types.Transaction, error) {
+	return _BindingSkateApp.contract.Transact(opts, "createMsg", message, chainType, chainId)
 }
 
-// CreateMsg is a paid mutator transaction binding the contract method 0xa7fcc6ab.
+// CreateMsg is a paid mutator transaction binding the contract method 0x20d41de9.
 //
-// Solidity: function createMsg(string message, uint32 chain) returns()
-func (_BindingSkateApp *BindingSkateAppSession) CreateMsg(message string, chain uint32) (*types.Transaction, error) {
-	return _BindingSkateApp.Contract.CreateMsg(&_BindingSkateApp.TransactOpts, message, chain)
+// Solidity: function createMsg(string message, uint32 chainType, uint32 chainId) returns()
+func (_BindingSkateApp *BindingSkateAppSession) CreateMsg(message string, chainType uint32, chainId uint32) (*types.Transaction, error) {
+	return _BindingSkateApp.Contract.CreateMsg(&_BindingSkateApp.TransactOpts, message, chainType, chainId)
 }
 
-// CreateMsg is a paid mutator transaction binding the contract method 0xa7fcc6ab.
+// CreateMsg is a paid mutator transaction binding the contract method 0x20d41de9.
 //
-// Solidity: function createMsg(string message, uint32 chain) returns()
-func (_BindingSkateApp *BindingSkateAppTransactorSession) CreateMsg(message string, chain uint32) (*types.Transaction, error) {
-	return _BindingSkateApp.Contract.CreateMsg(&_BindingSkateApp.TransactOpts, message, chain)
+// Solidity: function createMsg(string message, uint32 chainType, uint32 chainId) returns()
+func (_BindingSkateApp *BindingSkateAppTransactorSession) CreateMsg(message string, chainType uint32, chainId uint32) (*types.Transaction, error) {
+	return _BindingSkateApp.Contract.CreateMsg(&_BindingSkateApp.TransactOpts, message, chainType, chainId)
 }
 
 // BindingSkateAppTaskCreatedIterator is returned from FilterTaskCreated and is used to iterate over the raw logs and unpacked data for TaskCreated events raised by the BindingSkateApp contract.
@@ -354,17 +354,18 @@ func (it *BindingSkateAppTaskCreatedIterator) Close() error {
 
 // BindingSkateAppTaskCreated represents a TaskCreated event raised by the BindingSkateApp contract.
 type BindingSkateAppTaskCreated struct {
-	TaskId   *big.Int
-	TaskHash [32]byte
-	Message  string
-	Signer   common.Address
-	Chain    uint32
-	Raw      types.Log // Blockchain specific contextual infos
+	TaskId    *big.Int
+	TaskHash  [32]byte
+	Message   string
+	Signer    common.Address
+	ChainType uint32
+	ChainId   uint32
+	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterTaskCreated is a free log retrieval operation binding the contract event 0xf4334a6b82c42b3da48195ff8f637cc42e08d795f4df38d4313dbed7b00f201a.
+// FilterTaskCreated is a free log retrieval operation binding the contract event 0x900c1bba72823a7d83b1db8670af9c73250734013566f7308581ee5044fffec6.
 //
-// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chain)
+// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chainType, uint32 chainId)
 func (_BindingSkateApp *BindingSkateAppFilterer) FilterTaskCreated(opts *bind.FilterOpts, taskId []*big.Int) (*BindingSkateAppTaskCreatedIterator, error) {
 
 	var taskIdRule []interface{}
@@ -379,9 +380,9 @@ func (_BindingSkateApp *BindingSkateAppFilterer) FilterTaskCreated(opts *bind.Fi
 	return &BindingSkateAppTaskCreatedIterator{contract: _BindingSkateApp.contract, event: "TaskCreated", logs: logs, sub: sub}, nil
 }
 
-// WatchTaskCreated is a free log subscription operation binding the contract event 0xf4334a6b82c42b3da48195ff8f637cc42e08d795f4df38d4313dbed7b00f201a.
+// WatchTaskCreated is a free log subscription operation binding the contract event 0x900c1bba72823a7d83b1db8670af9c73250734013566f7308581ee5044fffec6.
 //
-// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chain)
+// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chainType, uint32 chainId)
 func (_BindingSkateApp *BindingSkateAppFilterer) WatchTaskCreated(opts *bind.WatchOpts, sink chan<- *BindingSkateAppTaskCreated, taskId []*big.Int) (event.Subscription, error) {
 
 	var taskIdRule []interface{}
@@ -421,9 +422,9 @@ func (_BindingSkateApp *BindingSkateAppFilterer) WatchTaskCreated(opts *bind.Wat
 	}), nil
 }
 
-// ParseTaskCreated is a log parse operation binding the contract event 0xf4334a6b82c42b3da48195ff8f637cc42e08d795f4df38d4313dbed7b00f201a.
+// ParseTaskCreated is a log parse operation binding the contract event 0x900c1bba72823a7d83b1db8670af9c73250734013566f7308581ee5044fffec6.
 //
-// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chain)
+// Solidity: event TaskCreated(uint256 indexed taskId, bytes32 taskHash, string message, address signer, uint32 chainType, uint32 chainId)
 func (_BindingSkateApp *BindingSkateAppFilterer) ParseTaskCreated(log types.Log) (*BindingSkateAppTaskCreated, error) {
 	event := new(BindingSkateAppTaskCreated)
 	if err := _BindingSkateApp.contract.UnpackLog(event, "TaskCreated", log); err != nil {

@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
+	pbCommon "github.com/Skate-Org/AVS/api/pb/common"
+	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	pbCommon "github.com/Skate-Org/AVS/api/pb/common"
-	pb "github.com/Skate-Org/AVS/api/pb/relayer"
 
 	bindingSkateApp "github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
 	libcmd "github.com/Skate-Org/AVS/lib/cmd"
@@ -18,6 +18,7 @@ import (
 	"github.com/Skate-Org/AVS/lib/monitor"
 	"github.com/Skate-Org/AVS/lib/on-chain/avs"
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/lib/on-chain/network"
 	skateappDb "github.com/Skate-Org/AVS/operator/db/skateapp/disk"
 )
 
@@ -63,7 +64,19 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 					return
 				}
 				if monitor.Verbose {
-					monitor.Logger.Info("Received TaskCreated event:", "task", task)
+					monitor.Logger.Info("Received TaskCreated event:",
+						"sender", task.Signer,
+						"msg", task.Message,
+						"chainId", task.ChainId, 
+            "chainType", task.ChainType,
+						"txHash", task.Raw.TxHash.Hex(),
+					)
+				}
+				if !network.IsSupported(task.ChainType) {
+					monitor.Logger.Info("Unsupported chain type", "chainType", task.ChainType, "action", "ignored")
+					continue
+				} else if monitor.Verbose {
+					monitor.Logger.Info("ChainType", "value", task.ChainType, "name", pb.ChainType_name[int32(task.ChainType)])
 				}
 				PostProcessLog(privateKey, task)
 			case err := <-watcher.Err():
@@ -85,8 +98,10 @@ func PostProcessLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkateApp.B
 	if err != nil {
 		return err
 	}
+	monitor.Logger.Info("Log dumped")
 	if privateKey != nil {
-		err = signAndBroadcastLog(privateKey, bindingTask)
+		monitor.Logger.Info("Prepare broadcasting...")
+		err := signAndBroadcastLog(privateKey, bindingTask)
 		if err != nil {
 			return err
 		}
@@ -98,12 +113,13 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	// Step 1: sign the log
 	digestHash := avs.TaskDigestHash(
 		uint32(bindingTask.TaskId.Int64()), bindingTask.Message, bindingTask.Signer.Hex(),
-		pb.ChainType_EVM, bindingTask.Chain,
+		pb.ChainType(bindingTask.ChainType), bindingTask.ChainId,
 	)
 	signature, err := ecdsa.Sign(digestHash, privateKey)
 	if err != nil {
 		return err
 	}
+	monitor.Logger.Info("Signature", "sig", signature)
 
 	// Step 2: broad cast log over grpc server
 	conn, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
@@ -124,8 +140,8 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	task := &pb.Task{
 		TaskId:    uint32(bindingTask.TaskId.Uint64()),
 		Msg:       bindingTask.Message,
-		ChainId:   bindingTask.Chain,
-		ChainType: pb.ChainType_EVM,
+		ChainId:   bindingTask.ChainId,
+		ChainType: pb.ChainType(bindingTask.ChainType),
 		Hash:      bindingTask.TaskHash[:],
 		Initiator: bindingTask.Signer.Hex(),
 	}
@@ -162,85 +178,4 @@ func dumpLog(bindingTask *bindingSkateApp.BindingSkateAppTaskCreated) error {
 	}
 
 	return err
-}
-
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////
-// NOTE: work over both https and wss, polling every 12 seconds by default
-// To be implemented if necessary (logic not up to date)
-func PollSkateApp(addr common.Address, backend backend.Backend, ctx context.Context) error {
-	contract, err := bindingSkateApp.NewBindingSkateApp(addr, backend)
-	if err != nil {
-		monitor.Logger.Error("Contract binding error: ", "error", err)
-		return err
-	}
-
-	// NOTE: Polling interval = 12s
-	ticker := time.NewTicker(12 * time.Second)
-	defer ticker.Stop()
-
-	// Retrieve the latest block number as the starting point for the filter
-	latest, err := backend.BlockNumber(ctx)
-	if err != nil {
-		if monitor.Verbose {
-			monitor.Logger.Error("Error retrieving latest block number: ", "error", err)
-		}
-		return err
-	}
-
-	// Filter options
-	queryOpts := &bind.FilterOpts{
-		Start:   latest,
-		Context: ctx,
-	}
-
-	// Function to process events
-	processEvents := func() error {
-		it, err := contract.FilterTaskCreated(queryOpts, nil)
-		if err != nil {
-			if monitor.Verbose {
-				monitor.Logger.Error("Error fetching events: ", "error", err)
-			}
-			return err
-		}
-
-		// Process all events since the last poll
-		for it.Next() {
-			event := it.Event
-			if monitor.Verbose {
-				monitor.Logger.Info("Retrieved TaskCreated event:", "task", event)
-			}
-		}
-
-		// Update the starting block for the next query to be the block number of the last fetched event
-		if it.Event != nil {
-			queryOpts.Start = it.Event.Raw.BlockNumber
-		}
-		return nil
-	}
-
-	// Immediately process events once before starting the ticker
-	if err := processEvents(); err != nil {
-		return err
-	}
-
-	// Polling loop
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				if err := processEvents(); err != nil {
-					continue
-				}
-			case <-ctx.Done():
-				if monitor.Verbose {
-					monitor.Logger.Info("Polling stopped due to context cancellation")
-				}
-				return
-			}
-		}
-	}()
-	// Keep the function alive until the context is cancelled
-	<-ctx.Done()
-	return nil
 }

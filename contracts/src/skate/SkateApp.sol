@@ -15,16 +15,28 @@ contract SkateApp {
         bytes32 taskHash,
         string message,
         address signer,
-        uint32 chain
+        uint32 chainType,
+        uint32 chainId
     );
+
     struct Task {
         string message;
-        uint32 chain;
+        uint32 chainId;
+        uint32 chainType;
     }
 
-    function createMsg(string memory message, uint32 chain) public {
-        Task memory task = Task({message: message, chain: chain});
-        //Create onchain keccak hash as onchain proof
+    function createMsg(
+        string memory message,
+        uint32 chainType,
+        uint32 chainId
+    ) public {
+        Task memory task = Task({
+            message: message,
+            chainType: chainType,
+            chainId: chainId
+        });
+
+        // task proof
         tasks[curTaskId++] = keccak256(abi.encode(task));
 
         emit TaskCreated(
@@ -32,7 +44,8 @@ contract SkateApp {
             tasks[curTaskId - 1],
             message,
             msg.sender,
-            chain
+            chainType,
+            chainId
         );
     }
 
