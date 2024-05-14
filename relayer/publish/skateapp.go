@@ -279,8 +279,8 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 
 		case pb.ChainType_SOLANA:
 			// NOTE: hacky method. For scaling up (processing 1Ms of address cross 1000s chains), use gRPC/raw TCP over Unix Sockets.
-			binary := "./solana_client/boxednode_client"
-			args := []string{"postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
+			binary := "node"
+			args := []string{"./solana_client/index.js", "postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
 			libExec.ExecBin(time.Duration(15), binary, args...)
 			TASK_PUBLISHED = true
 

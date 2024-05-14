@@ -1,31 +1,31 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
+	"time"
 
-	"github.com/Skate-Org/AVS/lib/logging"
-	"github.com/Skate-Org/AVS/lib/on-chain/avs"
+	// "github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/relayer/db/skateapp/disk"
+	libExec "github.com/Skate-Org/AVS/lib/exec"
 )
 
 func main() {
-	logger := logging.NewLoggerWithConsoleWriter()
 
-	pendingTasks, _ := fetchPendingTasks()
+	binary := "node"
+	args := []string{"solana_client/index.js", "getMessage", "1"}
+	libExec.ExecBin(time.Duration(15), binary, args...)
 
-	disk.SkateAppDB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE taskId=?`, disk.SignedTaskSchema), 49)
-	count := 0
-	for _, task := range pendingTasks {
-		// if task.ChainType == 1 && task.ChainId == 0 && task.TaskId == 30 {
-		count += 1
-		logger.Info("", "count", count, "task", task)
-		// }
-	}
+	// logger := logging.NewLoggerWithConsoleWriter()
+	// pendingTasks, _ := fetchPendingTasks()
 
-	bytes := avs.TaskData("hello", "0x37D191232D6655D82a7ae6159E8d9D55F303E6B2", 1, 0)
-	hString := hex.EncodeToString(bytes)
-	logger.Info("string", "s", hString)
+	// disk.SkateAppDB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE taskId=?`, disk.SignedTaskSchema), 49)
+	// count := 0
+	// for _, task := range pendingTasks {
+	// 	// if task.ChainType == 1 && task.ChainId == 0 && task.TaskId == 30 {
+	// 	count += 1
+	// 	logger.Info("", "count", count, "task", task)
+	// 	// }
+	// }
 }
 
 func fetchPendingTasks() ([]disk.SignedTask, error) {
