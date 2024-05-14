@@ -9,7 +9,6 @@ import (
 	clicmd "github.com/Skate-Org/AVS/relayer/cmd"
 
 	figure "github.com/common-nighthawk/go-figure"
-	"github.com/spf13/viper"
 )
 
 func main() {
@@ -22,7 +21,6 @@ func main() {
 
 	// Create a new Logger instance
 	logger := logging.NewLoggerWithConsoleWriter()
-	logger.Info(viper.GetString("skate_app"))
 
 	err := cmd.ExecuteContext(context.Background())
 	if err != nil {
