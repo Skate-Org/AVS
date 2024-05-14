@@ -124,7 +124,7 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	defer conn.Close()
 	if err != nil {
 		if monitor.Verbose {
-			monitor.Logger.Error("Failed to connect to Relayer", "error", errors.Wrap(err, "signAndBroadcastLog"))
+			monitor.Logger.Fatal("Failed to connect to Relayer", "error", errors.Wrap(err, "signAndBroadcastLog"))
 		}
 		return err
 	}

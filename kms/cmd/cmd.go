@@ -11,9 +11,10 @@ const VERSION = "v1.0.0"
 // New returns a new root cobra command that handles our command line tool.
 func New() *cobra.Command {
 	return libcmd.NewRootCmd(
-		"Key management system",
-		"CLI for Private Key management when intereacting with Skate App",
+		"Key management service",
+		"CLI for Key management service when intereacting with Skate App",
 		storePrivatekeyCmd(),
-		buildinfo.BuildInfoCmd(VERSION), // TODO: seperate package info
+		createPrivatekeyCmd(),
+		buildinfo.BuildInfoCmd(VERSION),
 	)
 }

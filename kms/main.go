@@ -14,7 +14,7 @@ import (
 func main() {
 	cmd := clicmd.New()
 
-	fig := figure.NewFigure("Key Management System", "", true)
+	fig := figure.NewFigure("Key Management Service", "", true)
 	cmd.SetHelpTemplate(fig.String() + "\n" + cmd.HelpTemplate())
 
 	libcmd.SilenceErrUsage(cmd)

@@ -10,8 +10,8 @@ skate_app: 0x37D191232D6655D82a7ae6159E8d9D55F303E6B2
 ##################################
 # HoleSky environments
 
-http_rpc: https://rpc-holesky.rockx.com
-# http_rpc: https://holesky.drpc.org
+# http_rpc: https://rpc-holesky.rockx.com
+http_rpc: https://holesky.drpc.org
 wss_rpc: wss://holesky.drpc.org
 ## Skate
 main_chain_id: 17000 # Holesky testnet
@@ -35,8 +35,11 @@ token_stETH: 0x3F1c547b21f65e10480dE3ad8E19fAAC46C95034
 ##################################
 # Skate Gateway
 # gateway:
-#   421614: # Arbitrum-sepolia
+#   0_421614: # Arbitrum-sepolia
 #     http_rpc: https://arbitrum-sepolia.blockpi.network/v1/rpc/public
+#     address: 0xc1Eb0ffdb88c59A043ab5B4fBf200795Cd5Acd03
+#
+#   1_0: # Solana-devnet
 #     address: 0xc1Eb0ffdb88c59A043ab5B4fBf200795Cd5Acd03
 
 ##################################

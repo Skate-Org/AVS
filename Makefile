@@ -101,7 +101,7 @@ build-relayer: extract_vcs_info ## build the relayer binary with version control
 
 build-kms: extract_vcs_info ## build the kms binary with version control metadata
 	@go build -ldflags "-X 'main.Commit=${gitCommitHash}' -X 'main.Timestamp=${gitTimestamp}'" -o bin/kms ./kms
-	@echo "Key Management System (KMS) binary built in ./bin/kms"
+	@echo "Key Management Service (KMS) binary built in ./bin/kms"
 
 
 -----------------------------: ## 

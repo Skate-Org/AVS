@@ -184,9 +184,10 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		relayerLogger.Info("Failed to suggest gas price:", "error", err)
 		return
 	}
-	aggressiveGas := new(big.Int).Div(currentGasPrice.Mul(currentGasPrice, big.NewInt(15)), big.NewInt(10))
+	aggressiveGas := new(big.Int).Div(currentGasPrice.Mul(currentGasPrice, big.NewInt(103)), big.NewInt(100))
 	avsTransactor, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	avsTransactor.GasPrice = aggressiveGas
+  // avsTransactor.GasLimit = 35e7
 
 	// Step 2.1: simulate
 	transactorNoSend := *avsTransactor

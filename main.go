@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/on-chain/avs"
 	"github.com/Skate-Org/AVS/relayer/db/skateapp/disk"
@@ -13,7 +14,7 @@ func main() {
 
 	pendingTasks, _ := fetchPendingTasks()
 
-	disk.SkateAppDB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE taskId=?`, disk.SignedTaskSchema), 46)
+	disk.SkateAppDB.Exec(fmt.Sprintf(`DELETE FROM %s WHERE taskId=?`, disk.SignedTaskSchema), 49)
 	count := 0
 	for _, task := range pendingTasks {
 		// if task.ChainType == 1 && task.ChainId == 0 && task.TaskId == 30 {
