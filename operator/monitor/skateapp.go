@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"crypto/tls"
 	"time"
 
 	pbCommon "github.com/Skate-Org/AVS/api/pb/common"
@@ -10,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 
 	bindingSkateApp "github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
 	libcmd "github.com/Skate-Org/AVS/lib/cmd"
@@ -118,16 +119,25 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(timeoutCtx, ":50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(),
+	tlsConfig := &tls.Config{
+		ServerName: "relayer.skatechain.org",
+	}
+	creds := credentials.NewTLS(tlsConfig)
+	if monitor.Verbose {
+		monitor.Logger.Info("Dialing relayer.skatechain.org ...")
+	}
+	conn, err := grpc.DialContext(timeoutCtx, "relayer.skatechain.org:443",
+		grpc.WithTransportCredentials(creds),
+		grpc.WithBlock(),
 	)
-	defer conn.Close()
 	if err != nil {
-		if monitor.Verbose {
-			monitor.Logger.Fatal("Failed to connect to Relayer", "error", errors.Wrap(err, "signAndBroadcastLog"))
-		}
+		monitor.Logger.Fatal("Failed to connect to Relayer at relayer.skatechain.org", "error", errors.Wrap(err, "signAndBroadcastLog"))
 		return err
 	}
+	if monitor.Verbose {
+		monitor.Logger.Info("Connected!", "conn", conn.GetState().String())
+	}
+	defer conn.Close()
 
 	client := pb.NewSubmissionClient(conn)
 
@@ -154,14 +164,17 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 		Signature: signedMessage,
 	}
 
+	if monitor.Verbose {
+		monitor.Logger.Info("Submitting signed task ... ", "payload", request)
+	}
 	response, err := client.SubmitTask(timeoutCtx, request)
 	if err != nil && monitor.Verbose {
-		monitor.Logger.Error("Could not submit task", "error", err)
+		monitor.Logger.Error("Submission failed: ", "error", err)
 		return err
 	}
 
 	if monitor.Verbose {
-		monitor.Logger.Info("Response result", "result", response)
+		monitor.Logger.Info("Submission approved: ", "result", response.String())
 	}
 	return nil
 }

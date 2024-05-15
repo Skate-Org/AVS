@@ -8,9 +8,9 @@ import (
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 	"github.com/Skate-Org/AVS/relayer/publish"
 
+	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	libcmd "github.com/Skate-Org/AVS/lib/cmd"
 )
 
 func publishCmd() *cobra.Command {
@@ -20,6 +20,7 @@ func publishCmd() *cobra.Command {
 	var signerConfigFile string
 	var overrideSigner string
 	var passphrase string
+	var verbose bool
 
 	cmd := &cobra.Command{
 		Use:   "publish",
@@ -57,6 +58,8 @@ func publishCmd() *cobra.Command {
 				"fromConfig", fmt.Sprintf("configs/relayer/%s.yaml", signerConfigFile),
 			)
 			ctx = context.WithValue(ctx, "signer", signerConfig)
+
+			publish.Verbose = verbose
 			publish.PublishTaskToAVSAndGateway(ctx)
 
 			return nil
@@ -67,12 +70,7 @@ func publishCmd() *cobra.Command {
 	libcmd.BindSignerConfig(cmd, &signerConfigFile)
 	libcmd.BindSigner(cmd, &overrideSigner)
 	libcmd.BindPassphrase(cmd, &passphrase)
-
-	verbose := true
 	libcmd.BindVerbose(cmd, &verbose)
-	if !verbose {
-		publish.Verbose = false
-	}
 
 	return cmd
 }

@@ -14,6 +14,7 @@ func retrieveCmd() *cobra.Command {
 	logger := logging.NewLoggerWithConsoleWriter()
 
 	var configFile string
+  var verbose bool
 
 	cmd := &cobra.Command{
 		Use:   "retrieve",
@@ -33,6 +34,7 @@ func retrieveCmd() *cobra.Command {
 			ctx := context.WithValue(context.Background(), "config", config)
 			s := retrieve.NewSubmissionServer(ctx)
 
+		retrieve.Verbose = verbose
 			s.Start()
 
 			return nil
@@ -40,12 +42,7 @@ func retrieveCmd() *cobra.Command {
 	}
 
 	libcmd.BindEnvConfig(cmd, &configFile)
-
-	verbose := true
 	libcmd.BindVerbose(cmd, &verbose)
-	if !verbose {
-		retrieve.Verbose = false
-	}
 
 	return cmd
 }

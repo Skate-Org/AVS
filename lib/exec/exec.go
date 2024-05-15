@@ -14,9 +14,8 @@ import (
 var logger = logging.NewLoggerWithConsoleWriter()
 
 func ExecBin(timeoutSecond time.Duration, binary string, args ...string) error {
-	// Setup the command and its arguments
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutSecond*time.Second)
-	defer cancel() // Ensure the context is canceled to free resources
+	defer cancel()
 
 	cmd := exec.CommandContext(ctx, binary, args...)
 
@@ -49,11 +48,7 @@ func ExecBin(timeoutSecond time.Duration, binary string, args ...string) error {
 	}
 
 	// Wait for the command to finish
-	err = cmd.Wait()
-	if err != nil {
-		logger.Error("Binary execution failed failed!", "error", err)
-		return err
-	}
+	cmd.Wait()
 
 	return nil
 }

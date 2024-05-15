@@ -26,6 +26,7 @@ func monitorSkateAppCmd() *cobra.Command {
 	var signerConfigFile string
 	var overrideSigner string
 	var passphrase string
+	var verbose bool
 
 	cmd := &cobra.Command{
 		Use:   "monitor",
@@ -63,6 +64,7 @@ func monitorSkateAppCmd() *cobra.Command {
 				logger.Info("No signer provided, running with watch-only mode...")
 			}
 
+			monitor.Verbose = verbose
 			startMonitor(ctx)
 
 			return nil
@@ -73,12 +75,7 @@ func monitorSkateAppCmd() *cobra.Command {
 	libcmd.BindSignerConfig(cmd, &signerConfigFile)
 	libcmd.BindSigner(cmd, &overrideSigner)
 	libcmd.BindPassphrase(cmd, &passphrase)
-
-	verbose := true
 	libcmd.BindVerbose(cmd, &verbose)
-	if !verbose {
-		monitor.Verbose = false
-	}
 
 	return cmd
 }

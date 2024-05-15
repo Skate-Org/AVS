@@ -43,24 +43,25 @@ func NewSubmissionServer(ctx context.Context) *submissionServer {
 }
 
 func (s *submissionServer) Start() {
-	grpc_server := grpc.NewServer()
-
-	pb.RegisterSubmissionServer(grpc_server, s)
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
+
+	grpc_server := grpc.NewServer()
+	pb.RegisterSubmissionServer(grpc_server, s)
+
 	retrieveLogger.Info("Server listening", "Address", lis.Addr().String(), "network", lis.Addr().Network())
 	if err := grpc_server.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }
 
 func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitRequest) (*pb.TaskSubmitReply, error) {
 	config := s.ctx.Value("config").(*libcmd.EnvironmentConfig)
-	// if Verbose {
-	// 	retrieveLogger.Info("Got request", "payload", in)
-	// }
+	if Verbose {
+		retrieveLogger.Info("Got request", "payload", in)
+	}
 
 	if !network.IsSupported(uint32(in.Task.ChainType), in.Task.ChainId) {
 		if Verbose {

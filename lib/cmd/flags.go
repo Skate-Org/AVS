@@ -23,7 +23,7 @@ func Redact(input string) string {
 
 // verbosity level
 func BindVerbose(cmd *cobra.Command, verbose *bool) {
-	cmd.Flags().BoolVar(verbose, "verbose", *verbose, "Run with verbose logs")
+	cmd.Flags().BoolVar(verbose, "verbose", false, "Run with verbose logs")
 }
 
 // env config
