@@ -166,7 +166,9 @@ This will run the operator process that:
 1. Monitor all tasks that submitted to SkateApp
 2. Encoded them using Skate standard
 3. Sign the task
-4. Send the signatures to relayer
+4. Send the signatures to our relayer at `relayer.skatechain.org`
+
+_NOTE: Detailed logic for signing and broadcasting at `operator/monitor/skateapp.go`_
 
 ---
 
