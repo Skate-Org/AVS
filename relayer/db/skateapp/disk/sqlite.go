@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"path/filepath"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/Skate-Org/AVS/lib/db"
 	config "github.com/Skate-Org/AVS/relayer/db"
+	"github.com/Skate-Org/AVS/relayer/db/skateapp"
+	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/Skate-Org/AVS/lib/logging"
 )
@@ -32,25 +33,7 @@ func init() {
 	InitializeSkateApp()
 }
 
-type SignedTask struct {
-	TaskId    uint32
-	Message   string
-	Initiator string
-	ChainType uint32
-	ChainId   uint32
-	Hash      []byte
-	Operator  string
-	Signature []byte
-}
-
-type CompletedTask struct {
-	TaskId    uint32
-	ChainType uint32
-	ChainId   uint32
-}
-
 func InitializeSkateApp() {
-	// TODO: decouple this table, [operator/signature] references [remaining]
 	SkateAppDB.Exec(`CREATE TABLE IF NOT EXISTS ` + SignedTaskSchema + ` (
 		id           INTEGER PRIMARY KEY AUTOINCREMENT,
 	  taskId       INTEGER,
@@ -74,6 +57,11 @@ func InitializeSkateApp() {
     UNIQUE (taskId, chainType, chainId)
 	)`)
 }
+
+type (
+	SignedTask    = skateapp.SignedTask
+	CompletedTask = skateapp.CompletedTask
+)
 
 func InsertSignedTask(signedTask SignedTask) error {
 	_, err := SkateAppDB.Exec(

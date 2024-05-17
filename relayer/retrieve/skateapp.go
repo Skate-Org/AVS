@@ -16,6 +16,7 @@ import (
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
 	"github.com/Skate-Org/AVS/lib/on-chain/network"
 	avsMemcache "github.com/Skate-Org/AVS/relayer/db/avs/mem"
+	"github.com/Skate-Org/AVS/relayer/db/skateapp/cloud"
 	skateappDb "github.com/Skate-Org/AVS/relayer/db/skateapp/disk"
 	skateappMemcache "github.com/Skate-Org/AVS/relayer/db/skateapp/mem"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -51,6 +52,10 @@ func (s *submissionServer) Start() {
 	grpc_server := grpc.NewServer()
 	pb.RegisterSubmissionServer(grpc_server, s)
 
+	// NOTE: set up cloud db client for data back up.
+	ddbService := cloud.NewDynamoDBService()
+	s.ctx = context.WithValue(s.ctx, "DynamoDBService", ddbService)
+
 	retrieveLogger.Info("Server listening", "Address", lis.Addr().String(), "network", lis.Addr().Network())
 	if err := grpc_server.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
@@ -58,7 +63,6 @@ func (s *submissionServer) Start() {
 }
 
 func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitRequest) (*pb.TaskSubmitReply, error) {
-	config := s.ctx.Value("config").(*libcmd.EnvironmentConfig)
 	if Verbose {
 		retrieveLogger.Info("Got request", "payload", in)
 	}
@@ -72,6 +76,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 		}, api.NewInvalidArgError("Unsupported network")
 	}
 
+	config := s.ctx.Value("config").(*libcmd.EnvironmentConfig)
 	// Step 1: Verify the operator
 	be, _ := backend.NewBackend(config.HttpRPC)
 	avsContract, _ := bindingISkateAVS.NewBindingISkateAVS(
@@ -139,7 +144,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	taskCache.CacheMessage(msgKey, msg)
 	sig := skateappMemcache.Signature{
 		Operator:  in.Signature.Address,
-		Signature: signature,
+		Signature: signature[:],
 	}
 	taskCache.AppendSignature(msgKey, sig)
 
@@ -160,6 +165,13 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInternalError("Server can't securely store signed task object")
 	}
+
+	// NOTE: for backup and distributed relayer scaling.
+	ddbService := s.ctx.Value("DynamoDBService").(*cloud.DynamoDBService)
+	if ddbService == nil {
+		retrieveLogger.Fatal("Dynamo DB service not created!")
+	}
+	ddbService.InsertSignedTask(signedTask)
 
 	return &pb.TaskSubmitReply{
 		Result: pb.TaskStatus_PROCESSING,

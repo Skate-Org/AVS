@@ -67,13 +67,6 @@ func RegisterOperatorWithAVS(
 		return err
 	}
 
-	ok, err := avsContract.CanRegister(
-		&bind.CallOpts{}, ecdsa.PubkeyToAddress(privateKey.PublicKey),
-	)
-	if err != nil {
-		logger.Fatal("Registration eligiblity", "allowed", ok, "error", err)
-	}
-
 	chainId := new(big.Int).SetUint64(config.MainChainId)
 
 	transactor, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)

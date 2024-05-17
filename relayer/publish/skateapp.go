@@ -17,6 +17,7 @@ import (
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/on-chain/avs"
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/Skate-Org/AVS/relayer/db/skateapp/cloud"
 	"github.com/Skate-Org/AVS/relayer/db/skateapp/disk"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -45,9 +46,10 @@ func PublishTaskToAVSAndGateway(ctx context.Context) {
 
 	signer := ctx.Value("signer").(*libcmd.SignerConfig)
 	privateKey, _ := backend.PrivateKeyFromKeystore(common.HexToAddress(signer.Address), signer.Passphrase)
+	ddbService := cloud.NewDynamoDBService()
 
 	// Call submitTasks immediately
-	submitTasksToAvs(avsContract, &be, config, privateKey)
+	submitDataToAVS(avsContract, &be, config, privateKey, ddbService)
 
 	for {
 		select {
@@ -55,7 +57,7 @@ func PublishTaskToAVSAndGateway(ctx context.Context) {
 			relayerLogger.Info("AVS publish process stopped!")
 			return
 		case <-ticker.C:
-			submitTasksToAvs(avsContract, &be, config, privateKey)
+			submitDataToAVS(avsContract, &be, config, privateKey, ddbService)
 		}
 	}
 }
@@ -81,7 +83,13 @@ type VerifiedTask struct {
 	Message   string
 }
 
-func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backend.Backend, config *libcmd.EnvironmentConfig, privateKey *ecdsa.PrivateKey) {
+func submitDataToAVS(
+	avsContract *bindingISkateAVS.BindingISkateAVS,
+	be *backend.Backend,
+	config *libcmd.EnvironmentConfig,
+	privateKey *ecdsa.PrivateKey,
+	ddbSerivce *cloud.DynamoDBService,
+) {
 	batchTaskId := make([]*big.Int, 0)
 	batchMessageData := make([][]byte, 0)
 	batchSignatureTuples := make([][]SignatureTuple, 0)
@@ -89,7 +97,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 	operatorCount := len(operators)
 
 	// Fetch pending tasks
-	tasks, err := fetchPendingTasks()
+	tasks, err := fetchPendingTasks(ddbSerivce)
 	if err != nil {
 		relayerLogger.Error("Failed to fetch pending tasks", "error", errors.Wrap(err, "submitTasksToAvs.fetchPendingTasks"))
 		return
@@ -105,15 +113,6 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		} else {
 			taskGroups[key] = []disk.SignedTask{task}
 		}
-		// digestHash := avs.TaskDigestHash(
-		// 	task.TaskId, task.Message, task.Initiator,
-		// 	pb.ChainType(task.ChainType), task.ChainId,
-		// )
-		// verified, err := ecdsa.Verify(common.HexToAddress(task.Operator), digestHash, [65]byte(task.Signature))
-		// if !verified || err != nil {
-		// 	relayerLogger.Error("Signature invalid!", "operator", task.Operator)
-		// }
-		// relayerLogger.Info("Signature verified!")
 	}
 
 	verifiedTasks := make([]VerifiedTask, 0)
@@ -140,8 +139,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 				Signature: task.Signature,
 			}
 		}
-    // NOTE: db already ensure signatures are unique
-		// Signatures must be sorted by address IN ASCENDING ORDER.
+		// NOTE: db already ensure signatures are unique, signatures must be sorted by address IN ASCENDING ORDER.
 		sort.Slice(signatureTuples, func(i, j int) bool {
 			return signatureTuples[i].Operator.Big().Cmp(signatureTuples[j].Operator.Big()) < 0
 		})
@@ -150,7 +148,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		batchMessageData = append(batchMessageData, messageData)
 		batchSignatureTuples = append(batchSignatureTuples, signatureTuples)
 
-		// NOTE: insert this verified task for subsequent publishing process.
+		// NOTE: construct these verified tasks for subsequent publishing process.
 		verifiedTasks = append(verifiedTasks, VerifiedTask{
 			TaskId:    task.TaskId,
 			ChainId:   task.ChainId,
@@ -160,6 +158,7 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		})
 
 		// NOTE: verify individually in go routines to avoid failures.
+		//
 		// chainId := new(big.Int).SetUint64(config.MainChainId)
 		// avsTransactor, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 		// _, err := avsContract.SubmitData(
@@ -184,10 +183,10 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		relayerLogger.Info("Failed to suggest gas price:", "error", err)
 		return
 	}
-	aggressiveGas := new(big.Int).Div(currentGasPrice.Mul(currentGasPrice, big.NewInt(315)), big.NewInt(100))
+	aggressiveGas := new(big.Int).Div(currentGasPrice.Mul(currentGasPrice, big.NewInt(115)), big.NewInt(100))
 	avsTransactor, _ := bind.NewKeyedTransactorWithChainID(privateKey, chainId)
 	avsTransactor.GasPrice = aggressiveGas
-  // avsTransactor.GasLimit = 35e7
+	// avsTransactor.GasLimit = 35e7
 
 	// Step 2.1: simulate
 	transactorNoSend := *avsTransactor
@@ -291,11 +290,14 @@ func submitTasksToAvs(avsContract *bindingISkateAVS.BindingISkateAVS, be *backen
 		// Step 3.2: Cache completed entry in the db
 		if TASK_PUBLISHED {
 			disk.InsertCompletedTask(completedTask)
+
+			ddbSerivce.InsertCompletedTask(completedTask)
 		}
 	}
 }
 
-func fetchPendingTasks() ([]disk.SignedTask, error) {
+// TODO: also fetch from the cloud db
+func fetchPendingTasks(ddbService *cloud.DynamoDBService) ([]disk.SignedTask, error) {
 	query := fmt.Sprintf(`
     SELECT *
     FROM %s s
@@ -328,5 +330,8 @@ func fetchPendingTasks() ([]disk.SignedTask, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
+	// TODO: also fetch from dynamod db if we want to the submission/publishcation process to be distributed
+
 	return pendingTasks, nil
 }

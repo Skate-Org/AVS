@@ -8,7 +8,6 @@ import (
 
 var (
 	DbDir     = "data/relayer"
-	Separator = []byte("::")
 )
 
 func init() {

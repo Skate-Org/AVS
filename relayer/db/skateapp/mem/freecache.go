@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"strconv"
 
+	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	"github.com/Skate-Org/AVS/relayer/db/skateapp"
 	"github.com/coocood/freecache"
 	"github.com/pkg/errors"
-	pb "github.com/Skate-Org/AVS/api/pb/relayer"
-	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
-
-	config "github.com/Skate-Org/AVS/relayer/db"
 )
+
+var SEPARATOR = []byte("#")
 
 type MemCache struct {
 	*freecache.Cache
@@ -21,18 +21,10 @@ func NewCache(size int) *MemCache {
 	return &MemCache{Cache: freecache.NewCache(size)}
 }
 
-type Signature struct {
-	Operator  string
-	Signature [65]byte // Fixed-size array to hold the signature
-}
-
-type Message struct {
-	TaskId    uint32
-	Initiator string
-	Message   string
-	ChainType pb.ChainType
-	ChainId   uint32
-}
+type (
+	Signature = skateapp.SignatureTuple
+	Message   = skateapp.Message
+)
 
 func GenKey(entry Message) []byte {
 	taskIdBytes := []byte(strconv.FormatUint(uint64(entry.TaskId), 10))
@@ -60,7 +52,7 @@ func (cache *MemCache) AppendSignature(key []byte, sig Signature) error {
 	cacheKey := ecdsa.Keccak256([]byte("skateapp:signed_task:"), key)
 	existingData, err := cache.Get(cacheKey)
 	if err == nil && len(existingData) > 0 {
-		existingData = append(existingData, config.Separator...)
+		existingData = append(existingData, SEPARATOR...)
 	}
 	existingData = append(existingData, sigData...)
 	return cache.Set([]byte(cacheKey), existingData, 0)
@@ -96,7 +88,7 @@ func (cache *MemCache) GetSignatures(key []byte) ([]Signature, error) {
 	}
 
 	// Split the data using the separator
-	parts := bytes.Split(data, config.Separator)
+	parts := bytes.Split(data, SEPARATOR)
 	signatures := make([]Signature, len(parts))
 
 	for i, part := range parts {

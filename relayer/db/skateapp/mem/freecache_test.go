@@ -48,9 +48,9 @@ func TestAppendSignature(t *testing.T) {
 	key := GenKey(refEntry)
 
 	signatures := []Signature{
-		{Operator: "0x1_github.com/Skate-Org/AVS", Signature: [65]byte{1}},
-		{Operator: "0x2_github.com/Skate-Org/AVS", Signature: [65]byte{2}},
-		{Operator: "0x3_github.com/Skate-Org/AVS", Signature: [65]byte{3}},
+		{Operator: "0x1_github.com/Skate-Org/AVS", Signature: []byte{1}},
+		{Operator: "0x2_github.com/Skate-Org/AVS", Signature: []byte{2}},
+		{Operator: "0x3_github.com/Skate-Org/AVS", Signature: []byte{3}},
 	}
 	for _, sig := range signatures {
 		if err := cache.AppendSignature(key, sig); err != nil {
