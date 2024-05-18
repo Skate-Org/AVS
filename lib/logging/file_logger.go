@@ -1,4 +1,4 @@
-package db
+package logging
 
 import (
 	"io"
@@ -8,17 +8,16 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rs/zerolog"
-	"github.com/Skate-Org/AVS/lib/logging"
 )
 
-func NewFileLogger(DbDir string, fileName string) *logging.Logger {
+func NewFileLogger(DbDir string, fileName string) *Logger {
 	logFile := createLogFile(DbDir, fileName)
 	plainWriter := zerolog.ConsoleWriter{Out: logFile, TimeFormat: time.RFC3339, NoColor: true}
-	return logging.NewLogger(plainWriter)
+	return NewLogger(plainWriter)
 }
 
 func createLogFile(DbDir string, fileName string) io.Writer {
-	logger := logging.NewLoggerWithConsoleWriter()
+	logger := NewLoggerWithConsoleWriter()
 	logFilePath := filepath.Join(DbDir, fileName)
 	if _, err := os.Stat(logFilePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(DbDir, os.ModePerm); err != nil {

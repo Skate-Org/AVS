@@ -27,9 +27,6 @@ logs.txt
 # just for example
 id_rsa
 
-# golden tests
-**/testdata/
-
 # binary builds
 bin
 

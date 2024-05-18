@@ -1,7 +1,6 @@
 package buildinfo
 
 import (
-	"context"
 	"log"
 	"runtime/debug"
 	"strings"
@@ -9,17 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 )
-
-// Instrument logs the version, git commit hash, and timestamp from the runtime build info.
-func Instrument(ctx context.Context, version string) {
-	_, commit, timestamp := getBuildInfo()
-
-	versionGauge.WithLabelValues(version).Set(1)
-	commitGauge.WithLabelValues(commit).Set(1)
-
-	ts, _ := time.Parse(time.RFC3339, timestamp)
-	timestampGauge.Set(float64(ts.Unix()))
-}
 
 func BuildInfoCmd(version string) *cobra.Command {
 	return &cobra.Command{

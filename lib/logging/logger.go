@@ -5,15 +5,11 @@ import (
 	"os"
 
 	zerolog "github.com/rs/zerolog"
-
-	sdkLogging "github.com/Layr-Labs/eigensdk-go/logging"
 )
 
 type Logger struct {
 	logger zerolog.Logger
 }
-
-var _ sdkLogging.Logger = (*Logger)(nil)
 
 func NewLogger(outputWriter io.Writer) *Logger {
 	logger := zerolog.New(outputWriter).With().Timestamp().Logger()
@@ -69,12 +65,12 @@ func (z Logger) Fatalf(template string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func (z Logger) With(tags ...interface{}) sdkLogging.Logger {
+func (z Logger) With(tags ...interface{}) Logger {
 	if len(tags) == 0 {
 		return z
 	}
 	fields := parseTags(tags...)
-	return &Logger{
+	return Logger{
 		logger: z.logger.With().Fields(fields).Logger(),
 	}
 }

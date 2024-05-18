@@ -9,18 +9,18 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
-	"github.com/Skate-Org/AVS/lib/db"
-	config "github.com/Skate-Org/AVS/operator/db"
+	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/Skate-Org/AVS/operator/db"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
 	SkateAppDB *sql.DB
-	TaskLogger = db.NewFileLogger(config.DbDir, "skateapp_tasks.log")
+	TaskLogger = logging.NewFileLogger(db.DbDir, "skateapp_tasks.log")
 )
 
 func init() {
-	db, err := sql.Open("sqlite3", filepath.Join(config.DbDir, "skateapp.db"))
+	db, err := sql.Open("sqlite3", filepath.Join(db.DbDir, "skateapp.db"))
 	if err != nil {
 		panic("Relayer DB initialization failed")
 	}
