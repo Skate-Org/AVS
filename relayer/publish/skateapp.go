@@ -219,7 +219,7 @@ func submitDataToAVS(
 	if Verbose {
 		relayerLogger.Info("Verification request sent", "txHash", tx.Hash().Hex())
 	}
-	receipt, err := backend.WaitMined(context.Background(), be, tx)
+	receipt, err := be.WaitMined(context.Background(), tx)
 	if err != nil {
 		relayerLogger.Error("Failed to get transaction receipt", "error", err)
 		return
@@ -266,7 +266,8 @@ func submitDataToAVS(
 				if err != nil {
 					continue
 				}
-				receipt, err := backend.WaitMined(context.Background(), &be, tx) // NOTE: can be rpc error, regardless need to re-publish next time
+				// NOTE: can be rpc error, regardless need to re-publish next time
+				receipt, err := be.WaitMined(context.Background(), tx)
 				if err != nil {
 					continue
 				}

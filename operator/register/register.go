@@ -95,7 +95,7 @@ func RegisterOperatorWithAVS(
 	account := ecdsa.PubkeyToAddress(privateKey.PublicKey).Hex()
 	logger.Info("Registration request to Skate AVS sent...", "txHash", tx.Hash().Hex(), "account", account)
 
-	receipt, err := backend.WaitMined(context.Background(), &be, tx)
+	receipt, err := be.WaitMined(context.Background(), tx)
 	if err != nil {
 		logger.Error("Failed to get transaction receipt", "error", errors.Wrap(err, "backend.TransactionReceipt"))
 		return err
@@ -152,7 +152,7 @@ func RegisterOperatorWithEigenLayer(
 
 	account := ecdsa.PubkeyToAddress(privateKey.PublicKey).Hex()
 	logger.Info("Registration request to EigenLayer sent...", "txHash", tx.Hash().Hex(), "account", account)
-	receipt, err := backend.WaitMined(context.Background(), &be, tx)
+	receipt, err := be.WaitMined(context.Background(), tx)
 	if err != nil {
 		logger.Error("Failed to get transaction receipt", "error", errors.Wrap(err, "backend.TransactionReceipt"))
 		return err

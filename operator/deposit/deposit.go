@@ -60,7 +60,7 @@ func DepositIntoStrategy(
 				logger.Error("Approve failed", "error", errors.Wrap(err, "ERC20.Approve"))
 				return err
 			}
-			_, err = backend.WaitMined(context.Background(), &be, tx)
+			_, err = be.WaitMined(context.Background(), tx)
 			logger.Info("Token approved")
 		} else {
 			logger.Fatal("Not enough allowance", "amount", amount, "allowance", allowance, "strategy manager", config.StrategyManager)
@@ -92,7 +92,7 @@ func DepositIntoStrategy(
 	account := ecdsa.PubkeyToAddress(privateKey.PublicKey).Hex()
 	logger.Info("Deposit request sent...", "txHash", tx.Hash().Hex(), "depositor", account)
 
-	receipt, err := backend.WaitMined(context.Background(), &be, tx)
+	receipt, err := be.WaitMined(context.Background(), tx)
 	if err != nil {
 		logger.Error("Failed to get transaction receipt", "error", errors.Wrap(err, "backend.TransactionReceipt"))
 		return err

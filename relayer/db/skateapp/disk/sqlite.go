@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"path/filepath"
 
-	"github.com/Skate-Org/AVS/lib/db"
 	config "github.com/Skate-Org/AVS/relayer/db"
 	"github.com/Skate-Org/AVS/relayer/db/skateapp"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,7 +12,7 @@ import (
 )
 
 var (
-	TaskLogger = db.NewFileLogger(config.DbDir, "skateapp_tasks.log")
+	TaskLogger = logging.NewFileLogger(config.DbDir, "skateapp_tasks.log")
 	SkateAppDB *sql.DB
 )
 

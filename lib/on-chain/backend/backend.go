@@ -1,11 +1,13 @@
 package backend
 
 import (
+	"context"
+	"time"
+
 	elEthClient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	elTxMgr "github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/Skate-Org/AVS/lib/logging"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/pkg/errors"
 )
 
 // NOTE: add Skate specific logic for multichain ops in future versions,
@@ -19,17 +21,32 @@ func NewBackend(rpc string) (Backend, error) {
 	return Backend{Client: elClient, RPC: rpc}, err
 }
 
-var _ elEthClient.Client = (*Backend)(nil)
+var logger = logging.NewLoggerWithConsoleWriter()
 
-type TxManager struct {
-	elTxMgr.TxManager
-}
+const MAX_WAIT = 10
 
-var _ elTxMgr.TxManager = (*TxManager)(nil)
+// WaitMined waits for tx to be mined on the blockchain.
+// Returns the transaction receipt when the transaction is mined.
+func (be *Backend) WaitMined(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
+	queryTicker := time.NewTicker(time.Second * 6)
+	defer queryTicker.Stop()
 
-func NewSimpleTxManager(wallet wallet.Wallet, backend Backend, sender common.Address) *TxManager {
-	logger := logging.NewLoggerWithConsoleWriter()
-	return &TxManager{
-		TxManager: elTxMgr.NewSimpleTxManager(wallet, backend, logger, sender),
+	count := 0
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-queryTicker.C:
+			receipt, err := be.TransactionReceipt(ctx, tx.Hash())
+			logger.Info("Error", "error", err, "hash", tx.Hash())
+			if receipt != nil {
+				return receipt, nil
+			}
+		}
+		count += 1
+		if count >= MAX_WAIT {
+			return nil, errors.New("Wait timed out!")
+		}
 	}
 }
