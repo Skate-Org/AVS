@@ -6,15 +6,16 @@ import (
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/relayer/retrieve"
 
-	"github.com/spf13/cobra"
 	libcmd "github.com/Skate-Org/AVS/lib/cmd"
+	"github.com/spf13/cobra"
 )
 
 func retrieveCmd() *cobra.Command {
 	logger := logging.NewLoggerWithConsoleWriter()
 
 	var configFile string
-  var verbose bool
+	var verbose bool
+	var enableMetrics bool
 
 	cmd := &cobra.Command{
 		Use:   "retrieve",
@@ -30,11 +31,18 @@ func retrieveCmd() *cobra.Command {
 				logger.Fatalf("Can't load config file at %s, error = %v", configFile, err)
 				return err
 			}
-
 			ctx := context.WithValue(context.Background(), "config", config)
+
+			if enableMetrics {
+				logger := logging.NewLoggerWithConsoleWriter()
+				metrics := retrieve.NewMetrics(MONITOR_METRICS_PORT, logger)
+				ctx = context.WithValue(ctx, "metrics", metrics)
+				metrics.Start()
+			}
+
 			s := retrieve.NewSubmissionServer(ctx)
 
-		retrieve.Verbose = verbose
+			retrieve.Verbose = verbose
 			s.Start()
 
 			return nil
@@ -43,6 +51,7 @@ func retrieveCmd() *cobra.Command {
 
 	libcmd.BindEnvConfig(cmd, &configFile)
 	libcmd.BindVerbose(cmd, &verbose)
+	libcmd.BindMetrics(cmd, &enableMetrics)
 
 	return cmd
 }

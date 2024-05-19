@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 12s
+
+scrape_configs:
+  - job_name: 'monitor'
+    static_configs:
+      # monitor.skateapp / ? / ?
+      - targets: ['localhost:9001', 'localhost:9101', 'localhost:9201']

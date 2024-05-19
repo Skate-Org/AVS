@@ -66,11 +66,13 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	if Verbose {
 		retrieveLogger.Info("Got request", "payload", in)
 	}
+	metrics := s.ctx.Value("metrics").(*Metrics)
 
 	if !network.IsSupported(uint32(in.Task.ChainType), in.Task.ChainId) {
 		if Verbose {
 			retrieveLogger.Info("Unsupported network!", "action", "ignored")
 		}
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_INVALID_CHAIN)
 		return &pb.TaskSubmitReply{
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInvalidArgError("Unsupported network")
@@ -87,6 +89,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 		if Verbose {
 			retrieveLogger.Error("Validator address format error", "error", err)
 		}
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_INVALID_OPERATOR)
 		return &pb.TaskSubmitReply{
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInvalidArgError("signer address format error")
@@ -112,6 +115,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 		if Verbose {
 			retrieveLogger.Error("Signature format error", "error", err)
 		}
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_INVALID_SIGNATURE)
 		return &pb.TaskSubmitReply{
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInvalidArgError("Signature format error, must be 65 bytes")
@@ -126,10 +130,13 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 				"ChainId", in.Task.ChainId,
 			)
 		}
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_INVALID_SIGNATURE)
 		return &pb.TaskSubmitReply{
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInvalidArgError("Invalid signature")
 	}
+
+	IncreaseTaskRetrieved(metrics, RetrieveStatus_VALID)
 
 	// Step 3: Update the db and push to memcache
 	msg := skateappMemcache.Message{
@@ -161,6 +168,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	err = skateappDb.InsertSignedTask(signedTask)
 	if err != nil && Verbose {
 		retrieveLogger.Error("Insert signed task to db failed", "error", err)
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_SAVE_FAILED)
 		return &pb.TaskSubmitReply{
 			Result: pb.TaskStatus_REJECTED,
 		}, api.NewInternalError("Server can't securely store signed task object")
@@ -169,10 +177,13 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	// NOTE: for backup and distributed relayer scaling.
 	ddbService := s.ctx.Value("DynamoDBService").(*cloud.DynamoDBService)
 	if ddbService == nil {
+		IncreaseTaskRetrieved(metrics, RetrieveStatus_SAVE_FAILED)
 		retrieveLogger.Fatal("Dynamo DB service not created!")
 	}
 	ddbService.InsertSignedTask(signedTask)
+	IncreaseTaskRetrieved(metrics, RetrieveStatus_SAVED)
 
+  // TODO: allow client subscription, push updated task status from the relayer publish process.
 	return &pb.TaskSubmitReply{
 		Result: pb.TaskStatus_PROCESSING,
 	}, nil
@@ -203,7 +214,6 @@ func isOperator(avsContract *bindingISkateAVS.BindingISkateAVS, address string) 
 		if op.Addr.Hex() == address {
 			return true, nil
 		}
-		// TODO: cache stake amounts as well
 	}
 
 	return false, nil

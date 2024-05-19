@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 12s
+
+scrape_configs:
+  - job_name: 'retrieve'
+    static_configs:
+      # retrieve.skateapp / ? / ?
+      - targets: ['localhost:9010', 'localhost:9110', 'localhost:9210']
+
+  - job_name: 'publish'
+    static_configs:
+      # publish.skateapp / ? / ?
+      - targets: ['localhost:9011', 'localhost:9111', 'localhost:9211']

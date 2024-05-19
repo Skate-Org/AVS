@@ -21,14 +21,19 @@ func Redact(input string) string {
 	return input
 }
 
+// prometheus metrics server
+func BindMetrics(cmd *cobra.Command, enableMetrics *bool) {
+	cmd.Flags().BoolVarP(enableMetrics, "metrics", "m", true, "Run with metrics server spawn on port specified by metrics config")
+}
+
 // verbosity level
 func BindVerbose(cmd *cobra.Command, verbose *bool) {
-	cmd.Flags().BoolVar(verbose, "verbose", false, "Run with verbose logs")
+	cmd.Flags().BoolVarP(verbose, "verbose", "v", true, "Run with verbose logs")
 }
 
 // env config
 func BindEnvConfig(cmd *cobra.Command, filename *string) {
-	cmd.Flags().StringVar(filename, "config", "testnet", "Config file to set up the environment")
+	cmd.Flags().StringVarP(filename, "config", "c", "testnet", "Config file to set up the environment")
 }
 
 func BindSignerConfig(cmd *cobra.Command, filename *string) {

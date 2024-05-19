@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const MONITOR_METRICS_PORT = "9001"
+
 func publishCmd() *cobra.Command {
 	logger := logging.NewLoggerWithConsoleWriter()
 
@@ -21,13 +23,13 @@ func publishCmd() *cobra.Command {
 	var overrideSigner string
 	var passphrase string
 	var verbose bool
+	var enableMetrics bool
 
 	cmd := &cobra.Command{
 		Use:   "publish",
-		Short: "Publish verified quorums into skate avs and create new message in respective gateway contracts",
-		Long: `Publish verified quorums into skate AVS, then create new message in respective gateway contracts. 
-    Relayer slashing is not yet implemented`,
-		Args: cobra.NoArgs,
+		Short: "Publish verified quorums and relay messages",
+		Long:  `Publish verified quorums to skate AVS, then relay messages in respective gateway contracts. Relayer slashing is not yet implemented`,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			envConfig, err := libcmd.ReadConfig[libcmd.EnvironmentConfig]("/environment", envConfigFile)
 			if err != nil {
@@ -53,6 +55,13 @@ func publishCmd() *cobra.Command {
 				return err
 			}
 
+			if enableMetrics {
+				logger := logging.NewLoggerWithConsoleWriter()
+				metrics := publish.NewMetrics(MONITOR_METRICS_PORT, logger)
+				ctx = context.WithValue(ctx, "metrics", metrics)
+				metrics.Start()
+			}
+
 			logger.Info("Relayer: Ready to publish tasks to AVS ..",
 				"signer", signerConfig.Address,
 				"fromConfig", fmt.Sprintf("configs/relayer/%s.yaml", signerConfigFile),
@@ -71,6 +80,7 @@ func publishCmd() *cobra.Command {
 	libcmd.BindSigner(cmd, &overrideSigner)
 	libcmd.BindPassphrase(cmd, &passphrase)
 	libcmd.BindVerbose(cmd, &verbose)
+	libcmd.BindMetrics(cmd, &enableMetrics)
 
 	return cmd
 }

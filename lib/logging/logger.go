@@ -65,12 +65,12 @@ func (z Logger) Fatalf(template string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func (z Logger) With(tags ...interface{}) Logger {
+func (z *Logger) With(tags ...interface{}) *Logger {
 	if len(tags) == 0 {
 		return z
 	}
 	fields := parseTags(tags...)
-	return Logger{
+	return &Logger{
 		logger: z.logger.With().Fields(fields).Logger(),
 	}
 }

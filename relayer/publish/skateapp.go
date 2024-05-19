@@ -48,16 +48,16 @@ func PublishTaskToAVSAndGateway(ctx context.Context) {
 	privateKey, _ := backend.PrivateKeyFromKeystore(common.HexToAddress(signer.Address), signer.Passphrase)
 	ddbService := cloud.NewDynamoDBService()
 
-	// Call submitTasks immediately
-	submitDataToAVS(avsContract, &be, config, privateKey, ddbService)
+	metrics := ctx.Value("metrics").(*Metrics)
 
+	submitDataToAVS(avsContract, &be, config, privateKey, ddbService, metrics)
 	for {
 		select {
 		case <-ctx.Done():
 			relayerLogger.Info("AVS publish process stopped!")
 			return
 		case <-ticker.C:
-			submitDataToAVS(avsContract, &be, config, privateKey, ddbService)
+			submitDataToAVS(avsContract, &be, config, privateKey, ddbService, metrics)
 		}
 	}
 }
@@ -89,6 +89,7 @@ func submitDataToAVS(
 	config *libcmd.EnvironmentConfig,
 	privateKey *ecdsa.PrivateKey,
 	ddbSerivce *cloud.DynamoDBService,
+	metrics *Metrics,
 ) {
 	batchTaskId := make([]*big.Int, 0)
 	batchMessageData := make([][]byte, 0)
@@ -172,9 +173,13 @@ func submitDataToAVS(
 		// }
 	}
 
-	if len(batchTaskId) == 0 {
+	numQuorums := len(batchTaskId)
+
+	if numQuorums == 0 {
 		return
 	}
+
+	AddAVSPublished(metrics, PublishStatus_SENT, float64(numQuorums))
 
 	// Step 2: Publish batch verified tasks to the AVS
 	chainId := new(big.Int).SetUint64(config.MainChainId)
@@ -228,10 +233,13 @@ func submitDataToAVS(
 		relayerLogger.Info("Transaction receipt: ", "status", receipt.Status, "gasUsed", receipt.GasUsed, "gasPrice", receipt.EffectiveGasPrice.Uint64())
 	}
 
+	AddAVSPublished(metrics, PublishStatus_CONFIRMED, float64(numQuorums))
+
 	// Step 3: publish verified tasks to the gateway
-	TASK_PUBLISHED := false
 	for _, verifiedTask := range verifiedTasks {
+		TASK_PUBLISHED := false
 		// Step 3.1: Publish to destination chain
+		IncreaseGatewayPublished(metrics, PublishStatus_SENT)
 		completedTask := disk.CompletedTask{
 			TaskId:    verifiedTask.TaskId,
 			ChainId:   verifiedTask.ChainId,
@@ -281,7 +289,7 @@ func submitDataToAVS(
 			// NOTE: hacky method. For scaling up (processing 1Ms of address cross 1000s chains), use gRPC/raw TCP over Unix Sockets.
 			binary := "node"
 			args := []string{"./solana_client/index.js", "postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
-			libExec.ExecBin(time.Duration(15), binary, args...)
+			libExec.ExecBin(time.Duration(30), binary, args...)
 			TASK_PUBLISHED = true
 
 		default:
@@ -292,7 +300,10 @@ func submitDataToAVS(
 		if TASK_PUBLISHED {
 			disk.InsertCompletedTask(completedTask)
 
+			// backup on cloud
 			ddbSerivce.InsertCompletedTask(completedTask)
+
+			IncreaseGatewayPublished(metrics, PublishStatus_CONFIRMED)
 		}
 	}
 }

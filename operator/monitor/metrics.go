@@ -4,49 +4,60 @@ import (
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/metrics"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type TaskStatus string
 
 const (
-	TaskStatus_COLLECTED     TaskStatus = "COLLECTED"
+  // Tasks that are detected from Skate App contracts
+	TaskStatus_DETECTED      TaskStatus = "DETECTED"
+  // Tasks that are detected then saved to local db
 	TaskStatus_SAVED         TaskStatus = "SAVED"
+  // Tasks that are detected but failed to save to local db
 	TaskStatus_SAVE_FAILED   TaskStatus = "SAVE_FAILED"
+  // Tasks that are detected then successfully sent to relayer for verification
 	TaskStatus_VERIFIED      TaskStatus = "VERIFIED"
+  // Tasks that are detected but failed to send to relayer for verification
 	TaskStatus_VERIFY_FAILED TaskStatus = "VERIFY_FAILED"
 )
 
 type Metrics struct {
 	*metrics.BaseMetrics
-	TaskCollected *prometheus.CounterVec
+	TaskProcessed *prometheus.CounterVec
 }
 
-const NAME_SPACE = "OPERATOR_monitor"
+const NAME_SPACE = "OPERATOR"
 
-func NewMetrics(httpPort string, logger logging.Logger) *Metrics {
+func NewMetrics(httpPort string, logger *logging.Logger) *Metrics {
 	logger = logger.With("process", NAME_SPACE)
 	baseMetrics := metrics.NewMetrics(httpPort, logger)
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
-	reg.MustRegister(collectors.NewGoCollector())
+  reg := baseMetrics.Registry
 
-	return &Metrics{
+	m := &Metrics{
 		BaseMetrics: baseMetrics,
-		TaskCollected: promauto.With(reg).NewCounterVec(
+		TaskProcessed: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: NAME_SPACE,
-				Name:      "skateapp_tasks",
-				Help:      "the number of on chain tasks collected from this operator",
+				Name:      "monitor_tasks",
+				Help:      "Number of task processed by operator's monitor server",
 			},
-			[]string{"status"}, // status can be: COLLECTED | SAVED | SAVE_FAILED | VERIFIED | VERIFY_FAILED
+			[]string{"status"}, // status can be: DETECTED | SAVED | SAVE_FAILED | VERIFIED | VERIFY_FAILED
 		),
 		// TODO: also include task that successfully went through AVS that this operator participated it (status=VERIFIED)
 	}
+
+	return m
 }
 
-// IncreaseTaskCollected increments the counter for the given TaskStatus.
-func (m *Metrics) IncreaseTaskCollected(status TaskStatus) {
-	m.TaskCollected.WithLabelValues(string(status)).Inc()
+// IncreaseTaskProcessed increments the counter for the given TaskStatus.
+func (m *Metrics) IncreaseTaskProcessed(status TaskStatus) {
+	m.TaskProcessed.WithLabelValues(string(status)).Inc()
+}
+
+func IncreaseTaskProcessed(m *Metrics, status TaskStatus) {
+	if m == nil {
+		return
+	}
+	m.IncreaseTaskProcessed(status)
 }

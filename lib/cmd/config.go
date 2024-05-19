@@ -18,7 +18,7 @@ type EnvironmentConfig struct {
 	SkateApp     string `mapstructure:"skate_app"`
 
 	// Eigenlayer
-	MainChainId uint64 `mapstructure:"main_chain_id"`
+	MainChainId       uint64 `mapstructure:"main_chain_id"`
 	SkateAVS          string `mapstructure:"skate_avs"`
 	WsETHStrategy     string `mapstructure:"wsETH_strategy"`
 	DelegationManager string `mapstructure:"delegation_manager"`

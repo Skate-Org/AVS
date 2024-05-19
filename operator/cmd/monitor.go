@@ -18,7 +18,8 @@ import (
 	operatorMonitor "github.com/Skate-Org/AVS/operator/monitor"
 )
 
-// TODO: decouple monitor from signing service
+const MONITOR_METRICS_PORT = "9001"
+
 func monitorSkateAppCmd() *cobra.Command {
 	logger := logging.NewLoggerWithConsoleWriter()
 
@@ -27,6 +28,7 @@ func monitorSkateAppCmd() *cobra.Command {
 	var overrideSigner string
 	var passphrase string
 	var verbose bool
+	var enableMetrics bool
 
 	cmd := &cobra.Command{
 		Use:   "monitor",
@@ -48,6 +50,13 @@ func monitorSkateAppCmd() *cobra.Command {
 				signerConfig.Passphrase = passphrase
 			}
 
+			if enableMetrics {
+				logger := logging.NewLoggerWithConsoleWriter()
+				metrics := operatorMonitor.NewMetrics(MONITOR_METRICS_PORT, logger)
+				ctx = context.WithValue(ctx, "metrics", metrics)
+        metrics.Start()
+			}
+
 			if signerConfig.Address != "" {
 				ctx = context.WithValue(ctx, "signer", signerConfig)
 
@@ -59,6 +68,7 @@ func monitorSkateAppCmd() *cobra.Command {
 				logger.Info("Operator: monitoring and processing tasks ..",
 					"signer", signerConfig.Address,
 					"fromConfig", fmt.Sprintf("configs/signer/operator/%s.yaml", signerConfigFile),
+          "verbosity", verbose,
 				)
 			} else {
 				logger.Info("No signer provided, running with watch-only mode...")
@@ -76,29 +86,29 @@ func monitorSkateAppCmd() *cobra.Command {
 	libcmd.BindSigner(cmd, &overrideSigner)
 	libcmd.BindPassphrase(cmd, &passphrase)
 	libcmd.BindVerbose(cmd, &verbose)
+	libcmd.BindMetrics(cmd, &enableMetrics)
 
 	return cmd
 }
 
-// TODO: populate context to the runner
 func startMonitor(ctx context.Context) {
 	env := ctx.Value("config").(*libcmd.EnvironmentConfig)
-	nollie := network.ChainID(env.SkateChainId)
-	nollie_backend0, _ := backend.NewBackend(env.SkateWSSRPC)
-	nollie_SkateApp := common.HexToAddress(env.SkateApp)
+	skateChainId := network.ChainID(env.SkateChainId)
+	skateBackend0, _ := backend.NewBackend(env.SkateWSSRPC)
+	skateappAddr := common.HexToAddress(env.SkateApp)
 
 	skateappDb.InitializeSkateApp()
 
 	contractAddrs := map[network.ChainID]common.Address{
-		nollie: nollie_SkateApp,
+		skateChainId: skateappAddr,
 	}
 
 	backends := map[network.ChainID][]backend.Backend{
-		nollie: {nollie_backend0},
+		skateChainId: {skateBackend0},
 	}
 
 	ctxs := map[network.ChainID]context.Context{
-		nollie: ctx,
+		skateChainId: ctx,
 	}
 
 	monitor := monitor.NewMonitor(ctxs, contractAddrs, backends)

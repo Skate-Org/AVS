@@ -47,11 +47,12 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 	}
 
 	signer := ctx.Value("signer").(*libcmd.SignerConfig)
-
 	var privateKey *ecdsa.PrivateKey
 	if signer != nil {
 		privateKey, _ = backend.PrivateKeyFromKeystore(common.HexToAddress(signer.Address), signer.Passphrase)
 	}
+
+	metrics := ctx.Value("metrics").(*Metrics)
 
 	// Event handler
 	go func() {
@@ -75,7 +76,8 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 					monitor.Logger.Info("Unsupported network!", "action", "ignored")
 					continue
 				}
-				PostProcessLog(privateKey, task)
+				IncreaseTaskProcessed(metrics, TaskStatus_DETECTED)
+				PostProcessLog(privateKey, task, metrics)
 			case err := <-watcher.Err():
 				if err != nil && monitor.Verbose {
 					monitor.Logger.Error("Watcher received error: ", "error", err)
@@ -90,16 +92,20 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 	return nil
 }
 
-func PostProcessLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkateApp.BindingSkateAppTaskCreated) error {
+func PostProcessLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkateApp.BindingSkateAppTaskCreated, metrics *Metrics) error {
 	err := dumpLog(bindingTask)
 	if err != nil {
+		IncreaseTaskProcessed(metrics, TaskStatus_SAVE_FAILED)
 		return err
 	}
+	IncreaseTaskProcessed(metrics, TaskStatus_SAVED)
 	if privateKey != nil {
 		err := signAndBroadcastLog(privateKey, bindingTask)
 		if err != nil {
+			IncreaseTaskProcessed(metrics, TaskStatus_VERIFY_FAILED)
 			return err
 		}
+		IncreaseTaskProcessed(metrics, TaskStatus_VERIFIED)
 	}
 	return nil
 }
