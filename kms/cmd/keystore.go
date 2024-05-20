@@ -8,6 +8,7 @@ import (
 
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/lib/on-chain/backend"
+	"github.com/ethereum/go-ethereum/common"
 	"gopkg.in/yaml.v3"
 
 	"github.com/pkg/errors"
@@ -139,5 +140,31 @@ func createPrivatekeyCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&passphrase, "passphrase", "p", "", "Passphrase")
 	cmd.Flags().StringVarP(&savePath, "save-path", "s", "", "File to save the signer config after create")
 
+	return cmd
+}
+
+func retrievePrivateKeyCmd() *cobra.Command {
+	logger := logging.NewLoggerWithConsoleWriter()
+
+	var passphrase string
+	var address string
+	cmd := &cobra.Command{
+		Use:   "retrieve",
+    Short: "Retrieve and print the locally stored private key given wallet address and passphrase.\nWARNING⚠️ : USE WITH CAUTION",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			privateKey, err := backend.PrivateKeyFromKeystore(common.HexToAddress(address), passphrase)
+			if err != nil {
+				logger.Error("Failed to retrieve private key", "error", err)
+				return errors.Wrap(err, "Failed to retrieve private key")
+			}
+
+			logger.Info("Private Key (Hex):", "value", hex.EncodeToString(privateKey.D.Bytes()))
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVarP(&passphrase, "passphrase", "p", "", "Passphrase")
+	cmd.Flags().StringVarP(&address, "address", "a", "", "Address")
 	return cmd
 }

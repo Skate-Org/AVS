@@ -29,7 +29,7 @@ ___DOCKER___: ## Docker package management
 DOCKER_REGISTRY = ghcr.io/skate-org
 KMS_IMAGE_NAME = skate-kms
 OPERATOR_IMAGE_NAME = skate-operator
-KMS_VERSION ?= 1.0.0
+KMS_VERSION ?= 1.1.0
 OPERATOR_VERSION ?= 0.1.1
 LATEST_RELEASE ?= false
 
