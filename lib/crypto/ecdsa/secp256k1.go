@@ -2,7 +2,6 @@ package ecdsa
 
 import (
 	"crypto/ecdsa"
-	// "encoding/hex"
 	"io"
 
 	"github.com/pkg/errors"
@@ -32,11 +31,10 @@ func Sign(digestHash []byte, key *PrivateKey) ([65]byte, error) {
 }
 
 // Recover the public key that sign a given hash
+// DigestHash must be 32 bytes
 //
 // NOTE: Equivalent to Openzeppelin's ECDSA.recover function:
 // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/cryptography/ECDSA.sol
-//
-// NOTE: digestHash must be 32 bytes
 func EcRecover(digestHash []byte, sig [65]byte) (common.Address, error) {
 	if v := sig[64]; v != 27 && v != 28 {
 		return common.Address{}, errors.New("invalid recovery id (V) format, must be 27 or 28")
@@ -53,7 +51,7 @@ func EcRecover(digestHash []byte, sig [65]byte) (common.Address, error) {
 }
 
 // Verify ethereum signed message
-// NOTE: digestHash must be 32 bytes
+// DigestHash must be 32 bytes
 func Verify(address common.Address, digestHash []byte, sig [65]byte) (bool, error) {
 	actual, err := EcRecover(digestHash, sig)
 
@@ -62,16 +60,6 @@ func Verify(address common.Address, digestHash []byte, sig [65]byte) (bool, erro
 
 func PubkeyToAddress(publicKey PublicKey) common.Address {
 	return ethcrypto.PubkeyToAddress(publicKey)
-}
-
-func Keccak256(data ...[]byte) []byte {
-	return ethcrypto.Keccak256(data...)
-}
-
-func Keccak256Message(data ...[]byte) []byte {
-	digest := ethcrypto.Keccak256(data...)
-	prefix := []byte("\x19Ethereum Signed Message:\n32")
-	return Keccak256(prefix, digest)
 }
 
 func S256() *secp256k1.BitCurve {

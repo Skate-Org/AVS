@@ -7,7 +7,7 @@ import (
 	"time"
 
 	bindingIDelegationManager "github.com/Skate-Org/AVS/contracts/bindings/IDelegationManager"
-	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	libHash "github.com/Skate-Org/AVS/lib/crypto/hash"
 	"github.com/Skate-Org/AVS/lib/logging"
 	"github.com/Skate-Org/AVS/operator/register"
 
@@ -60,7 +60,7 @@ func registerAvsCmd() *cobra.Command {
 
 			b := make([]byte, 128)
 			_, err = rand.Read(b)
-			salt := ecdsa.Keccak256([]byte("very random string"), b)
+			salt := libHash.Keccak256([]byte("very random string"), b)
 
 			// Expires in 1 minutes (5 blocks)
 			expiry := new(big.Int).SetInt64(time.Now().Unix() + 60)

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	pb "github.com/Skate-Org/AVS/api/pb/relayer"
-	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	libHash "github.com/Skate-Org/AVS/lib/crypto/hash"
 )
 
 // Calculate the pack encoded data of a TaskData
@@ -70,5 +70,5 @@ func TaskDigestHash(
 	taskIdBytes := new(big.Int).SetUint64(uint64(taskId)).FillBytes(buf32)
 	msgBytes := TaskData(msg, initiator, chainType, chainId)
 
-	return ecdsa.Keccak256Message(taskIdBytes, msgBytes)
+	return libHash.Keccak256Message(taskIdBytes, msgBytes)
 }

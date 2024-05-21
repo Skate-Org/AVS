@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/Skate-Org/AVS/lib/crypto/ecdsa"
+	libHash "github.com/Skate-Org/AVS/lib/crypto/hash"
 	"github.com/Skate-Org/AVS/relayer/db/skateapp"
 	"github.com/coocood/freecache"
 	"github.com/pkg/errors"
@@ -31,7 +31,7 @@ func GenKey(entry Message) []byte {
 	chainTypeBytes := []byte(strconv.FormatUint(uint64(entry.ChainType), 10))
 	chainIdBytes := []byte(strconv.FormatUint(uint64(entry.ChainId), 10))
 
-	return ecdsa.Keccak256(taskIdBytes, chainTypeBytes, chainIdBytes)
+	return libHash.Keccak256(taskIdBytes, chainTypeBytes, chainIdBytes)
 }
 
 func (cache *MemCache) CacheMessage(key []byte, entry Message) error {
@@ -40,7 +40,7 @@ func (cache *MemCache) CacheMessage(key []byte, entry Message) error {
 	if err != nil {
 		return err
 	}
-	cacheKey := ecdsa.Keccak256([]byte("skateapp:task:"), key)
+	cacheKey := libHash.Keccak256([]byte("skateapp:task:"), key)
 	return cache.Set(cacheKey, data, 0)
 }
 
@@ -49,7 +49,7 @@ func (cache *MemCache) AppendSignature(key []byte, sig Signature) error {
 	if err != nil {
 		return err
 	}
-	cacheKey := ecdsa.Keccak256([]byte("skateapp:signed_task:"), key)
+	cacheKey := libHash.Keccak256([]byte("skateapp:signed_task:"), key)
 	existingData, err := cache.Get(cacheKey)
 	if err == nil && len(existingData) > 0 {
 		existingData = append(existingData, SEPARATOR...)
@@ -59,7 +59,7 @@ func (cache *MemCache) AppendSignature(key []byte, sig Signature) error {
 }
 
 func (cache *MemCache) GetMessage(key []byte) (*Message, error) {
-	cacheKey := ecdsa.Keccak256([]byte("skateapp:task:"), key)
+	cacheKey := libHash.Keccak256([]byte("skateapp:task:"), key)
 	data, err := cache.Get(cacheKey)
 	if err != nil {
 		return nil, errors.Wrap(err, "Cache.GetMessage/Get")
@@ -78,7 +78,7 @@ func (cache *MemCache) GetMessage(key []byte) (*Message, error) {
 
 // GetSignatures retrieves and deserializes all signatures from the cache.
 func (cache *MemCache) GetSignatures(key []byte) ([]Signature, error) {
-	cacheKey := ecdsa.Keccak256([]byte("skateapp:signed_task:"), key)
+	cacheKey := libHash.Keccak256([]byte("skateapp:signed_task:"), key)
 	data, err := cache.Get([]byte(cacheKey))
 	if err != nil {
 		return nil, err
