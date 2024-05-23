@@ -48,7 +48,10 @@ func PublishTaskToAVSAndGateway(ctx context.Context) {
 	privateKey, _ := backend.PrivateKeyFromKeystore(common.HexToAddress(signer.Address), signer.Passphrase)
 	ddbService := cloud.NewDynamoDBService()
 
-	metrics := ctx.Value("metrics").(*Metrics)
+	var metrics *Metrics
+	if ctx.Value("metrics") != nil {
+		metrics = ctx.Value("metrics").(*Metrics)
+	}
 
 	submitDataToAVS(avsContract, &be, config, privateKey, ddbService, metrics)
 	for {
@@ -287,10 +290,19 @@ func submitDataToAVS(
 
 		case pb.ChainType_SOLANA:
 			// NOTE: hacky method. For scaling up (processing 1Ms of address cross 1000s chains), use gRPC/raw TCP over Unix Sockets.
-			binary := "node"
-			args := []string{"./solana_client/index.js", "postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
-			libExec.ExecBin(time.Duration(30), binary, args...)
-			TASK_PUBLISHED = true
+			switch verifiedTask.ChainId {
+			// TODO: Integrate more chains
+			case 0: // Solana
+				binary := "node"
+				args := []string{"./solana_client/index.js", "postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
+				libExec.ExecBin(time.Duration(30), binary, args...)
+				TASK_PUBLISHED = true
+			case 1: // Eclipse
+				binary := "node"
+				args := []string{"./solana_client/index_eclipse.js", "postMessage", strconv.FormatUint(uint64(verifiedTask.TaskId), 10), verifiedTask.Initiator, verifiedTask.Message}
+				libExec.ExecBin(time.Duration(30), binary, args...)
+				TASK_PUBLISHED = true
+			}
 
 		default:
 			relayerLogger.Error("Unsupported chain type, ignored")

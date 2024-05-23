@@ -23,7 +23,7 @@ func Redact(input string) string {
 
 // prometheus metrics server
 func BindMetrics(cmd *cobra.Command, enableMetrics *bool) {
-	cmd.Flags().BoolVarP(enableMetrics, "metrics", "m", true, "Run with metrics server spawn on port specified by metrics config")
+	cmd.Flags().BoolVarP(enableMetrics, "metrics", "m", false, "Run with metrics server spawn on port specified by metrics config")
 }
 
 // verbosity level

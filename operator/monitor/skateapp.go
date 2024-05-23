@@ -2,7 +2,7 @@ package monitor
 
 import (
 	"context"
-	"crypto/tls"
+	// "crypto/tls"
 	"time"
 
 	pbCommon "github.com/Skate-Org/AVS/api/pb/common"
@@ -11,7 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	// "google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	bindingSkateApp "github.com/Skate-Org/AVS/contracts/bindings/SkateApp"
 	libcmd "github.com/Skate-Org/AVS/lib/cmd"
@@ -52,7 +53,10 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 		privateKey, _ = backend.PrivateKeyFromKeystore(common.HexToAddress(signer.Address), signer.Passphrase)
 	}
 
-	metrics := ctx.Value("metrics").(*Metrics)
+	var metrics *Metrics
+	if ctx.Value("metrics") != nil {
+		metrics = ctx.Value("metrics").(*Metrics)
+	}
 
 	// Event handler
 	go func() {
@@ -76,6 +80,7 @@ func SubscribeSkateApp(addr common.Address, be backend.Backend, ctx context.Cont
 					monitor.Logger.Info("Unsupported network!", "action", "ignored")
 					continue
 				}
+
 				IncreaseTaskProcessed(metrics, TaskStatus_DETECTED)
 				PostProcessLog(privateKey, task, metrics)
 			case err := <-watcher.Err():
@@ -125,17 +130,23 @@ func signAndBroadcastLog(privateKey *ecdsa.PrivateKey, bindingTask *bindingSkate
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	tlsConfig := &tls.Config{
-		ServerName: "relayer.skatechain.org",
-	}
-	creds := credentials.NewTLS(tlsConfig)
-	if monitor.Verbose {
-		monitor.Logger.Info("Dialing relayer.skatechain.org ...")
-	}
-	conn, err := grpc.DialContext(timeoutCtx, "relayer.skatechain.org:443",
-		grpc.WithTransportCredentials(creds),
+	// tlsConfig := &tls.Config{
+	// 	ServerName: "relayer.skatechain.org",
+	// }
+	// creds := credentials.NewTLS(tlsConfig)
+	// if monitor.Verbose {
+	// 	monitor.Logger.Info("Dialing relayer.skatechain.org ...")
+	// }
+	// conn, err := grpc.DialContext(timeoutCtx, "relayer.skatechain.org:443",
+	// 	grpc.WithTransportCredentials(creds),
+	// 	grpc.WithBlock(),
+	// )
+
+	conn, err := grpc.DialContext(timeoutCtx, ":50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 	)
+	monitor.Logger.Info("Sending to relayer...")
 	if err != nil {
 		monitor.Logger.Fatal("Failed to connect to Relayer at relayer.skatechain.org", "error", errors.Wrap(err, "signAndBroadcastLog"))
 		return err

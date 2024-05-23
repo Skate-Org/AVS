@@ -10,8 +10,8 @@ trap 'kill "${PIDs[@]}"; exit' SIGINT SIGTERM
 cd ..
 
 # Start each operator in the background
-for i in {1..3}; do
-    ./bin/operator monitor --signer-config $i --verbose=false &
+for i in {1..30}; do
+    ./bin/operator monitor --signer-config $i --verbose=true &
     # Store PID of the last background process
     PIDs+=($!)
 done

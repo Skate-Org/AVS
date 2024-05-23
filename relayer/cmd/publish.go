@@ -65,6 +65,7 @@ func publishCmd() *cobra.Command {
 			logger.Info("Relayer: Ready to publish tasks to AVS ..",
 				"signer", signerConfig.Address,
 				"fromConfig", fmt.Sprintf("configs/relayer/%s.yaml", signerConfigFile),
+				"verbose", verbose,
 			)
 			ctx = context.WithValue(ctx, "signer", signerConfig)
 

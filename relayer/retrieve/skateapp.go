@@ -66,7 +66,11 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	if Verbose {
 		retrieveLogger.Info("Got request", "payload", in)
 	}
-	metrics := s.ctx.Value("metrics").(*Metrics)
+
+	var metrics *Metrics
+	if s.ctx.Value("metrics") != nil {
+		metrics = s.ctx.Value("metrics").(*Metrics)
+	}
 
 	if !network.IsSupported(uint32(in.Task.ChainType), in.Task.ChainId) {
 		if Verbose {
@@ -183,7 +187,7 @@ func (s *submissionServer) SubmitTask(_ context.Context, in *pb.TaskSubmitReques
 	ddbService.InsertSignedTask(signedTask)
 	IncreaseTaskRetrieved(metrics, RetrieveStatus_SAVED)
 
-  // TODO: allow client subscription, push updated task status from the relayer publish process.
+	// TODO: allow client subscription, push updated task status from the relayer publish process.
 	return &pb.TaskSubmitReply{
 		Result: pb.TaskStatus_PROCESSING,
 	}, nil

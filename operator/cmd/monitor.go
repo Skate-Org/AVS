@@ -65,10 +65,10 @@ func monitorSkateAppCmd() *cobra.Command {
 					logger.Fatal("Invalid keystore for signer", "configFile", signerConfig)
 					return err
 				}
-				logger.Info("Operator: monitoring and processing tasks ..",
+				logger.Info("Operator: monitoring ...",
 					"signer", signerConfig.Address,
 					"fromConfig", fmt.Sprintf("configs/signer/operator/%s.yaml", signerConfigFile),
-          "verbosity", verbose,
+          "verbose", verbose,
 				)
 			} else {
 				logger.Info("No signer provided, running with watch-only mode...")

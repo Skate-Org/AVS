@@ -15,7 +15,7 @@ func IsSupported(chainType uint32, chainId uint32) bool {
 		}
 	case uint32(pb.ChainType_SOLANA):
 		switch chainId {
-		case 0: // do not accept other
+		case 0, 1: // Solana (0), Eclipse (1)
 			return true
 		default:
 			return false
