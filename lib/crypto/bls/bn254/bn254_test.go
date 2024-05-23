@@ -1,6 +1,7 @@
 package bn254_test
 
 import (
+	"crypto/rand"
 	"math/big"
 	"testing"
 
@@ -79,16 +80,27 @@ func TestG2Point(t *testing.T) {
 	assert.Equal(t, g2Point.Y, deserialized.Y, "G2 point Y coordinate mismatch after deserialization")
 }
 
-func TestHashToG1(t *testing.T) {
-	// Test HashToG1
-	digest := [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}
-	hashedPoint := bn254.HashToG1(digest)
-	expectedX, _ := new(fp.Element).SetString("455867356320691211509944977504407603390036387149619137164185182714736811811")
-	expectedY, _ := new(fp.Element).SetString("9802125641729881429496664198939823213610051907104384160271670136040620850981")
+func TestHashToG2(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var digest [32]byte
+		rand.Read(digest[:])
+		hashedPoint := bn254.HashToG2(digest)
 
-	assert.NotNil(t, hashedPoint, "Hashed G1 point should not be nil")
-	assert.Equal(t, *expectedX, hashedPoint.X, "X mismatch")
-	assert.Equal(t, *expectedY, hashedPoint.Y, "Y mismatch")
+		assert.NotNil(t, hashedPoint, "Hashed G2 point should not be nil")
+		assert.True(t, hashedPoint.IsOnCurve(), "Hashed G2 point should be on 𝔽p² curve")
+		assert.True(t, hashedPoint.IsInSubGroup(), "Hashed G2 point should be in the correct subgroup G2")
+	}
+}
+
+func TestHashToG1(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var digest [32]byte
+		rand.Read(digest[:])
+		hashedPoint := bn254.HashToG1(digest)
+
+		assert.NotNil(t, hashedPoint, "Hashed G1 point should not be nil")
+		assert.True(t, hashedPoint.IsOnCurve(), "Hashed G1 point should be on 𝔽p curve")
+	}
 }
 
 func TestG1G2Multiplication(t *testing.T) {

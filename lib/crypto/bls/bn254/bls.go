@@ -21,30 +21,23 @@ func NewPrivateKey(stringKey string) (*PrivateKey, error) {
 	return privateKey, nil
 }
 
-type KeyPair struct {
+type BLSKey struct {
 	PrivKey *PrivateKey
-	PubKey  *G1Point
+	PubKey  *G2Point
 }
 
-func NewKeyPair(privKey *PrivateKey) *KeyPair {
-	pubKey := MulByGeneratorG1(privKey) // pubkey = privateKey * G1
-	return &KeyPair{privKey, &G1Point{pubKey}}
+func NewKeyPair(privKey *PrivateKey) *BLSKey {
+	pubKey := MulByGeneratorG2(privKey) // pubkey = privateKey * G1
+	return &BLSKey{
+		PrivKey: privKey,
+		PubKey:  &G2Point{pubKey},
+	}
 }
 
-// IsImage use `bn254.PairingCheck` to check if:
-//
-// e(P1,g1) = e(g2,P2), i.e. pubkeyG1 <-> pubkeyG2
-func (p1 *G1Point) IsImage(p2 *G2Point) (bool, error) {
-	return bn254.PairingCheck(
-		[]bn254.G1Affine{*p1.G1Affine, *new(bn254.G1Affine).Neg(GetG1Generator())},
-		[]bn254.G2Affine{*GetG2Generator(), *p2.G2Affine},
-	)
-}
-
-func GenRandomBlsKeys() (*KeyPair, error) {
+func GenRandomBlsKeys() (*BLSKey, error) {
 	r, _ := new(big.Int).SetString(fr.Modulus().String(), 10)
 
-	// Generate cryptographically strong pseudo-random between 0 - r (order of Fr)
+	// Generate cryptographically strong pseudo-random element of group Fr
 	n, err := rand.Int(rand.Reader, r)
 	if err != nil {
 		return nil, err
@@ -55,78 +48,78 @@ func GenRandomBlsKeys() (*KeyPair, error) {
 }
 
 type Signature struct {
-	*G1Point `json:"g1_point"`
+	*G1Point
 }
 
 func NewZeroSignature() *Signature {
 	return &Signature{NewZeroG1Point()}
 }
 
+// Should rarely be used, use Jacobian instead
 func (s *Signature) Add(otherSignature *Signature) *Signature {
 	s.G1Point.Add(otherSignature.G1Point)
 	return s
 }
 
-// AggregateSignatures aggregates multiple signatures into one
+// AggregateSignatures aggregates multiple signatures
+// NOTE: for G1 signature
 func AggregateSignatures(sigs []*Signature) *Signature {
-	aggSigs := NewZeroSignature()
+	aggSigJac := bn254.G1Jac{}
 	for _, sig := range sigs {
-		aggSigs.Add(sig)
+		sigJac := new(bn254.G1Jac).FromAffine(sig.G1Affine)
+		aggSigJac.AddAssign(sigJac)
 	}
-	return aggSigs
+	return &Signature{
+		&G1Point{
+			new(bn254.G1Affine).FromJacobian(&aggSigJac),
+		},
+	}
 }
 
-// AggregateSignatures aggregates multiple signatures into one
-func AggregateG2PubKey(G2pubKeys []*G2Point) *G2Point {
-	aggG2PubKeys := NewZeroG2Point()
-	for _, key := range G2pubKeys {
-		aggG2PubKeys.Add(key)
+// AggregateSignatures aggregates multiple publickey
+// NOTE: for G2 pubkey
+func AggregatePubKey(pubKeys []*G2Point) *G2Point {
+	aggPubkeyJac := bn254.G2Jac{}
+	for _, key := range pubKeys {
+		keyJac := new(bn254.G2Jac).FromAffine(key.G2Affine)
+		aggPubkeyJac.AddAssign(keyJac)
 	}
-	return aggG2PubKeys
+	return &G2Point{
+		new(bn254.G2Affine).FromJacobian(&aggPubkeyJac),
+	}
 }
 
 // This signs a hashed message (e.g. keccak256(msg)) on G1,
 //
 // Require a G2Pubkey for verification
-func (k *KeyPair) SignMessage(digestHash [32]byte) *Signature {
-	H := HashToG1(digestHash)
+func (k *BLSKey) SignMessage(msgDigest [32]byte) *Signature {
+	H := HashToG1(msgDigest)
 	sig := new(bn254.G1Affine).ScalarMultiplication(H, k.PrivKey.BigInt(new(big.Int)))
 	return &Signature{&G1Point{sig}}
 }
 
-func (k *KeyPair) GetPubKeyG2() *G2Point {
-	return &G2Point{MulByGeneratorG2(k.PrivKey)}
-}
-
-func (k *KeyPair) GetPubKeyG1() *G1Point {
-	return k.PubKey
-}
-
-// verifySig internal methods to verify bls signature
+// verifySignature internal methods to verify bls signature
 //
 // Check pairing function according to BLS scheme:
-// e(Hash(message), signature) = e(pubkeyG2, g2)
-func verifySig(sig *bn254.G1Affine, pubkey *bn254.G2Affine, msgBytes [32]byte) (bool, error) {
-	g2Gen := GetG2Generator()
+// e(pubKeyG1, Hash(message)G2) = e(g1, signatureG2)
+func verifySignature(signature *bn254.G1Affine, pubkey *bn254.G2Affine, msgDigest [32]byte) (bool, error) {
+	negateG2 := new(bn254.G2Affine).Neg(GetG2Generator())
 
-	msgPoint := HashToG1(msgBytes)
+	messageG1 := HashToG1(msgDigest)
 
-	var negSig bn254.G1Affine
-	negSig.Neg((*bn254.G1Affine)(sig))
-
-	P := [2]bn254.G1Affine{*msgPoint, negSig}
-	Q := [2]bn254.G2Affine{*pubkey, *g2Gen}
+	P := [2]bn254.G1Affine{*messageG1, *signature}
+	Q := [2]bn254.G2Affine{*pubkey, *negateG2}
 
 	ok, err := bn254.PairingCheck(P[:], Q[:])
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	return ok, nil
 }
 
-// VerifySignature verify a signed bls signature against the message and public key
-func (s *Signature) VerifySignature(pubkey *G2Point, message [32]byte) (bool, error) {
-	ok, err := verifySig(s.G1Affine, pubkey.G2Affine, message)
+// Verify verify a signed bls signature against the message and public key
+func (s *Signature) Verify(pubkey *G2Point, msgDigest [32]byte) (bool, error) {
+	ok, err := verifySignature(s.G1Affine, pubkey.G2Affine, msgDigest)
 	if err != nil {
 		return false, err
 	}

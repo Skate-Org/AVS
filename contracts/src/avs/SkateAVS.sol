@@ -7,6 +7,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 import {IAVSDirectory} from "eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategy.sol";
@@ -15,15 +16,26 @@ import {IDelegationManager} from "./interfaces/IDelegationManager.sol";
 
 import {SkateAVSStorage} from "./SkateAVSStorage.sol";
 import {Errors} from "./Errors.sol";
+import {BN254} from "./libraries/BN254.sol";
+import {BLS} from "./libraries/BLS.sol";
 
 /**
  * @notice StakeAVS contract is an implementation of AVS by Skate chain. It allows operator to opt-in to Skate AVS.
  * The operators can validate and sign the data that is later submitted to this contract upon reaching of quorum of
  * 2/3 of operators.
  */
-contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, PausableUpgradeable, SkateAVSStorage {
+contract SkateAVS is
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    SkateAVSStorage
+    // ,EIP712
+{
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
+    using BN254 for BN254.G1Point;
+    using BN254 for BN254.G2Point;
 
     uint256 public constant WEIGHTING_DIVISOR = 1e18;
     IAVSDirectory internal immutable _avsDirectory;
@@ -34,7 +46,10 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
      * @param avsDirectory_ instance of avs directory.
      * @param delegationManager_ instance of delegation manager.
      */
-    constructor(IAVSDirectory avsDirectory_, IDelegationManager delegationManager_) {
+    constructor(
+        IAVSDirectory avsDirectory_,
+        IDelegationManager delegationManager_ // EIP712("SkateAVS", "v0.2.0")
+    ) {
         _avsDirectory = avsDirectory_;
         _delegationManager = delegationManager_;
         _disableInitializers();
@@ -72,23 +87,49 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
      * @param operatorSignature operator signature to verify the validity of operator
      * requirements
      * - can only be called when AVS is not paused.
+     *
+     * @dev there is no restriction on the ecdsa private key must match BLS private key.
+     * Operator can use 2 different private key for operations.
      */
     function registerOperatorToAVS(
         address operator,
-        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature
-    ) external override whenNotPaused {
+        ISignatureUtils.SignatureWithSaltAndExpiry memory operatorSignature,
+        BN254.G2Point memory blsPubKey
+    )
+        external
+        override
+        // BN254.G1Point memory blsRegistrationSignature
+        whenNotPaused
+    {
         if (operator != msg.sender) revert Errors.OnlyOperatorAllowedToCall();
         if (_allowlistEnabled && !_allowlist[operator]) revert Errors.OperatorNotAllowed();
         if (isOperator(operator)) revert Errors.AlreadyAnOperator();
         if (_operators.length == _maxOperatorCount) revert Errors.MaxOperatorCountReached();
         if (_operatorTotalDelegations(operator) < _minOperatorStake) revert Errors.MinOperatorStakeNotSatisfied();
 
+        // NOTE: should we verify the publicKey?
+        // + Not verify:
+        //   + Save 120K gas, no security implication (Can DDOS pubKey space? <-> likely impossible)
+        //   - Operator must later use the correct key to verify quotes => register but later can't verify if key mismatch.
+        // + Verify:
+        //   + Cost 120K gas.
+        //   + Ensure operator know what they are doing
+        // => Don't verify for now.
+        // bytes32 registrationMessage = pubkeyRegistrationMessage(operator);
+        // bool isValidBlsSignature = BLS.verifySinglePubKey(blsRegistrationSignature, blsPubKey, registrationMessage);
+        // if (!isValidBlsSignature) revert Errors.InvalidBLSSignature();
+
         _isOperator[operator] = true;
+        _blsPubKey[operator] = blsPubKey;
         _operators.push(operator);
         _avsDirectory.registerOperatorToAVS(operator, operatorSignature);
 
         emit OperatorAdded(operator);
     }
+
+    // function pubkeyRegistrationMessage(address operator) public view returns (bytes32) {
+    //     return _hashTypedDataV4(keccak256(abi.encode(PUBKEY_REGISTRATION_TYPEHASH, operator)));
+    // }
 
     /**
      * @notice Returns the EigenLayer AVSDirectory contract.
@@ -112,7 +153,8 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
             address operator = _operators[i];
             uint96 total = _operatorTotalDelegations(operator);
             uint96 staked = _getSelfDelegations(operator);
-            operators_[i] = Operator(operator, total > staked ? total - staked : 0, staked);
+            BN254.G2Point memory blsPubKey = _blsPubKey[operator];
+            operators_[i] = Operator(operator, total > staked ? total - staked : 0, staked, blsPubKey);
         }
     }
 
@@ -241,7 +283,12 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
                 break;
             }
         }
+        delete _isOperator[operator];
         _avsDirectory.deregisterOperatorFromAVS(operator);
+
+        // NOTE: should we de-register blsPubKey as well? (no security implications to keep it, collision property <<< 1)
+        // BN254.G2Point memory zeroG2;
+        // _blsPubKey[operator] = zeroG2;
 
         emit OperatorRemoved(operator);
     }
@@ -266,36 +313,37 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
      * verification. The quorum of 2/3 of operators must be reached for the successful submission.
      * @param taskId The id of the task.
      * @param messageData the message data validated by the operators.
-     * @param signatureTuples the list of operator signatures to be validated.
+     * @param signedOperators the list of operators participate in the signature aggregation
+     * @param aggregatedSignature the BLS aggregated signature
      */
-    function submitData(uint256 taskId, bytes calldata messageData, SignatureTuple[] calldata signatureTuples)
-        public
-        override
-    {
-        bytes32 digest = keccak256(abi.encodePacked(taskId, messageData)).toEthSignedMessageHash();
-        uint256 sigsVerified;
-        bool quorumSuccessful;
-        for (uint256 i = 0; i < signatureTuples.length; i++) {
-            SignatureTuple memory sigTuple = signatureTuples[i];
-            if (!isOperator(sigTuple.operator)) revert Errors.NotAnOperator();
-
-            if (i > 0) {
-                SignatureTuple memory prevSigTuple = signatureTuples[i - 1];
-                if (sigTuple.operator == prevSigTuple.operator) revert Errors.DuplicateSignature();
-                if (sigTuple.operator < prevSigTuple.operator) revert Errors.SignaturesAreNotOrdered();
-            }
-
-            if (ECDSA.recover(digest, sigTuple.signature) != sigTuple.operator) revert Errors.InvalidSignature();
-            sigsVerified++;
-
-            // 2/3 of operators must submit the data.
-            if (sigsVerified * 10_000 >= operators().length * 6666) {
-                quorumSuccessful = true;
-                break;
-            }
+    function submitData(
+        uint256 taskId,
+        bytes calldata messageData,
+        address[] calldata signedOperators,
+        BN254.G1Point calldata aggregatedSignature
+    ) public override {
+        uint256 numOperator = _operators.length;
+        // 2/3 of operators must submit the data.
+        if (signedOperators.length * 3 < numOperator * 2) {
+            revert Errors.QuorumNotReached();
         }
 
-        if (!quorumSuccessful) revert Errors.QuorumNotReached();
+        BN254.G2Point[] memory signedPubKeys = new BN254.G2Point[](signedOperators.length);
+
+        for (uint256 i = 0; i < signedOperators.length; i++) {
+            address operator = signedOperators[i];
+            if (!isOperator(operator)) revert Errors.NotAnOperator();
+
+            signedPubKeys[i] = _blsPubKey[operator];
+        }
+
+        // NOTE: don't need toEthSignedMessageHash because normal call use ECDSA signature =>no risk for collision here.
+        bytes32 digest = keccak256(abi.encodePacked(taskId, messageData));
+        bool isSignatureValid = BLS.verifyBatchPubKey(aggregatedSignature, signedPubKeys, digest);
+        if (!isSignatureValid) {
+            revert Errors.InvalidBLSSignature();
+        }
+
         emit DataSubmitted(taskId, messageData);
     }
 
@@ -303,15 +351,17 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
      * @notice submits data in batch and verify it. Internally calls {submitData} function.
      * @param taskIds the list of task ids.
      * @param messageDatas the list of message datas.
-     * @param signaturesTuples the list of signature tuples by operators.
+     * @param signedOperators the list of operators participate in the signature aggregation of each task
+     * @param aggregatedSignatures the list of BLS aggregated signatures
      */
     function batchSubmitData(
         uint256[] calldata taskIds,
         bytes[] calldata messageDatas,
-        SignatureTuple[][] calldata signaturesTuples
+        address[][] calldata signedOperators,
+        BN254.G1Point[] calldata aggregatedSignatures
     ) external override {
         for (uint256 i = 0; i < taskIds.length; i++) {
-            submitData(taskIds[i], messageDatas[i], signaturesTuples[i]);
+            submitData(taskIds[i], messageDatas[i], signedOperators[i], aggregatedSignatures[i]);
         }
     }
 
@@ -380,8 +430,7 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
      * @param operator The operator address
      */
     function _getSelfDelegations(address operator) internal view returns (uint96 staked) {
-        (IStrategy[] memory strategiesByOperator, uint256[] memory shares) =
-            _delegationManager.getDelegatableShares(operator);
+        (IStrategy[] memory strategiesByOperator, uint256[] memory shares) = _delegationManager.getDelegatableShares(operator);
 
         for (uint256 i = 0; i < strategiesByOperator.length; i++) {
             // find the strategy params for the strategy
@@ -396,7 +445,7 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
             // if strategy is not found, do not consider it in stake
             if (address(params.strategy) == address(0)) continue;
 
-            staked += uint96(shares[i] * params.multiplier / WEIGHTING_DIVISOR);
+            staked += uint96((shares[i] * params.multiplier) / WEIGHTING_DIVISOR);
         }
     }
 
@@ -407,7 +456,7 @@ contract SkateAVS is Initializable, UUPSUpgradeable, OwnableUpgradeable, Pausabl
     function _operatorTotalDelegations(address operator) internal view returns (uint96 delegation) {
         for (uint256 i = 0; i < _strategies.length; i++) {
             uint256 shares = _delegationManager.operatorShares(operator, _strategies[i].strategy);
-            delegation += uint96(shares * _strategies[i].multiplier / WEIGHTING_DIVISOR);
+            delegation += uint96((shares * _strategies[i].multiplier) / WEIGHTING_DIVISOR);
         }
     }
 

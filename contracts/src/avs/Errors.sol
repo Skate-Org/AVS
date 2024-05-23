@@ -15,8 +15,8 @@ library Errors {
     error AllowlistAlreadyDisabled();
     error ZeroStrategyAddress();
     error StrategyAlreadyAdded();
-    error InvalidSignature();
     error DuplicateSignature();
     error SignaturesAreNotOrdered();
     error QuorumNotReached();
+    error InvalidBLSSignature();
 }

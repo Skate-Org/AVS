@@ -19,15 +19,10 @@ type encryptedBLSKeyJSONV3 struct {
 }
 
 // SaveToFile saves the private key in an encrypted keystore file
-func (k *KeyPair) SaveToFile(path string, password string) error {
+func (k *BLSKey) SaveToFile(path string, password string) error {
 	sk32Bytes := k.PrivKey.Bytes()
-	skBytes := make([]byte, 32)
-	for i := 0; i < 32; i++ {
-		skBytes[i] = sk32Bytes[i]
-	}
-
 	cryptoStruct, err := keystore.EncryptDataV3(
-		skBytes,
+    sk32Bytes[:],
 		[]byte(password),
 		keystore.StandardScryptN,
 		keystore.StandardScryptP,
@@ -58,7 +53,7 @@ func (k *KeyPair) SaveToFile(path string, password string) error {
 	return nil
 }
 
-func ReadPrivateKeyFromFile(path string, password string) (*KeyPair, error) {
+func ReadPrivateKeyFromFile(path string, password string) (*BLSKey, error) {
 	keyStoreContents, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

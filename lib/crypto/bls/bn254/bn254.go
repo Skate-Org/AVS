@@ -14,10 +14,19 @@ func newFpElement(x *big.Int) fp.Element {
 	return p
 }
 
+// NOTE: BN254 curve (same as ETH core implementation)
+// seed x₀=4965661367192848881
+// Frobenius Trace: t = 6x₀² + 1
+// [r = p - t + 1]
+// 𝔽r: r=21888242871839275222246405745257275088548364400416034343698204186575808495617 (36x₀⁴+36x₀³+18x₀²+6x₀+1)
+// 𝔽p: p=21888242871839275222246405745257275088696311157297823662689037894645226208583 (36x₀⁴+36x₀³+24x₀²+6x₀+1)
+// (E/𝔽p): Y²=X³+3
+// (Eₜ/𝔽p²): Y² = X³+3/(u+9) (D-type twist)
+
 ////////////////////////////////////////////
 ////////////////// G1 //////////////////////
 
-// Define on the Elliptic curve over field Fp, p = 2^254 - 127
+// Define on the Elliptic curve over field 𝔽p, p = 2^254 - 127
 //
 // A point on G1 is (X, Y)
 type G1Point struct {
@@ -71,36 +80,6 @@ func DeserializeG1(b []byte) *bn254.G1Affine {
 	return p
 }
 
-// HashToG1 implements the simple hash-and-check (also sometimes try-and-increment) algorithm
-// see https://hackmd.io/@benjaminion/bls12-381#Hash-and-check
-// Note that this function needs to be the same as the one used in the contract:
-// https://github.com/Layr-Labs/eigenlayer-middleware/blob/1feb6ae7e12f33ce8eefb361edb69ee26c118b5d/src/libraries/BN254.sol#L292
-// we don't use the newer constant time hash-to-curve algorithms as they are gas-expensive to compute onchain
-func HashToG1(digest [32]byte) *bn254.G1Affine {
-	one := new(big.Int).SetUint64(1)
-	three := new(big.Int).SetUint64(3)
-	x := new(big.Int)
-	x.SetBytes(digest[:])
-	for {
-		// y = x^3 + 3
-		xP3 := new(big.Int).Exp(x, big.NewInt(3), fp.Modulus())
-		y := new(big.Int).Add(xP3, three)
-		y.Mod(y, fp.Modulus())
-
-		if y.ModSqrt(y, fp.Modulus()) == nil {
-			x.Add(x, one).Mod(x, fp.Modulus())
-		} else {
-			var fpX, fpY fp.Element
-			fpX.SetBigInt(x)
-			fpY.SetBigInt(y)
-			return &bn254.G1Affine{
-				X: fpX,
-				Y: fpY,
-			}
-		}
-	}
-}
-
 func GetG1Generator() *bn254.G1Affine {
 	g1Gen := new(bn254.G1Affine)
 	_, err := g1Gen.X.SetString("1")
@@ -119,10 +98,46 @@ func MulByGeneratorG1(a *fr.Element) *bn254.G1Affine {
 	return new(bn254.G1Affine).ScalarMultiplication(g1Gen, a.BigInt(new(big.Int)))
 }
 
+// Hash the message to a field element
+func hashToField(msgDigest [32]byte) *big.Int {
+	z := new(big.Int).SetBytes(msgDigest[:])
+	z.Mod(z, fp.Modulus())
+	return z
+}
+
+// HashToG1 implements the simple hash-and-check (also sometimes try-and-increment) algorithm
+// Reference: https://hackmd.io/@benjaminion/bls12-381#Hashing-to-the-curve
+func HashToG1(digest [32]byte) *bn254.G1Affine {
+	x := hashToField(digest)
+
+	one := new(big.Int).SetUint64(1)
+	three := new(big.Int).SetUint64(3)
+	for {
+		// Curve: y^2 = x^3 + 3
+		xCube := new(big.Int).Exp(x, three, fp.Modulus())
+		y := new(big.Int).Add(xCube, three)
+		y.Mod(y, fp.Modulus())
+
+		//  true sqrt means on curve, returns the G1 point
+		if y.ModSqrt(y, fp.Modulus()) != nil {
+			var fpX, fpY fp.Element
+			fpX.SetBigInt(x)
+			fpY.SetBigInt(y)
+
+			return &bn254.G1Affine{
+				X: fpX,
+				Y: fpY,
+			}
+		}
+
+		x.Add(x, one) // already mod when cubing
+	}
+}
+
 /////////////////////////////////////////////
 ////////////////// G2 //////////////////////
 
-// Define on the Elliptic curve over extension field Fp^2, p = 2^254 - 127
+// Define on the Elliptic curve over extension field 𝔽p², p = 2^254 - 127
 //
 // A point on G2 is (X{A0, A1}, Y{A0, A1})
 type G2Point struct {
@@ -130,9 +145,9 @@ type G2Point struct {
 }
 
 func NewG2Point(X, Y [2]*big.Int) *G2Point {
+	// NOTE: swapped for convention with ETH implementation (P_g2 = X0 * i + X1 = A0 + A1 * i)
 	return &G2Point{
 		&bn254.G2Affine{
-			// TODO: why are 1 and 0 swapped here?
 			X: struct{ A0, A1 fp.Element }{
 				A0: newFpElement(X[1]),
 				A1: newFpElement(X[0]),
@@ -206,4 +221,83 @@ func GetG2Generator() *bn254.G2Affine {
 func MulByGeneratorG2(a *fr.Element) *bn254.G2Affine {
 	g2Gen := GetG2Generator()
 	return new(bn254.G2Affine).ScalarMultiplication(g2Gen, a.BigInt(new(big.Int)))
+}
+
+var (
+	// NOTE: G2 sextic twist parameters
+	// y^2 = x^3 + b0 + b1 * i
+	// |E'(𝔽p²)| = p^2+1+2p-t^2 = (p-t+1)*(p+t-1) = |E(𝔽p)| * (p+t-1) = r * (p+t-1) = |G2| * (p+t-1)
+	//
+	// the co-factor of G2: cG2 = p+t-1
+	G2Cofactor, _ = new(big.Int).SetString("21888242871839275222246405745257275088844257914179612981679871602714643921549", 10)
+
+	// Equivalent to 3/(9+i) in 𝔽p²
+	G2b0, _ = new(big.Int).SetString("19485874751759354771024239261021720505790618469301721065564631296452457478373", 10)
+	G2b1, _ = new(big.Int).SetString("266929791119991161246907387137283842545076965332900288569378510910307636690", 10)
+)
+
+// WARNING: Must be same with smart contracts implementation
+//
+// HashToG2 take a digest message and map to a G2 Point
+func HashToG2(digest [32]byte) *bn254.G2Affine {
+	// return hashToG2SVDW(digest)
+	return hasToG2TryAndIncrement(digest)
+}
+
+// hashToG2SVDW use the built-in SVDW map, more efficient but maybe more gas intensive than try and increment
+func hashToG2SVDW(digest [32]byte) *bn254.G2Affine {
+	x := hashToField(digest)
+	var u bn254.E2
+	u.A0.SetBigInt(x)
+
+	g2point := bn254.MapToG2(u)
+	return &g2point
+}
+
+// hasToG2TryAndIncrement implements the simple hash-and-check (try-and-increment) algorithm
+func hasToG2TryAndIncrement(digest [32]byte) *bn254.G2Affine {
+	x := hashToField(digest)
+
+	one := new(big.Int).SetUint64(1)
+	three := new(big.Int).SetUint64(3)
+	for {
+		var y2E2 bn254.E2
+		xCube := new(big.Int).Exp(x, three, fp.Modulus())
+		y0 := new(big.Int).Add(xCube, G2b0)
+		y0.Mod(y0, fp.Modulus())
+
+		y2E2.A0.SetBigInt(y0)
+		y2E2.A1.SetBigInt(G2b1)
+
+		// found a point on 𝔽p², cofactor clearing to G2
+		if y2E2.Legendre() == 1 {
+			var xE2, yE2 bn254.E2
+			xE2.A0.SetBigInt(x)
+			yE2.Sqrt(&y2E2)
+
+			// Multiply the curve2Point by the cofactor to ensure it is in the correct subgroup
+			curve2Point := &bn254.G2Affine{
+				X: xE2,
+				Y: yE2,
+			}
+
+			// TODO: why does multiplying with co-factor of G2 not work?
+			// g2Point := new(bn254.G2Affine).ScalarMultiplication(curve2Point, G2Cofactor)
+			// if !new(bn254.G2Affine).ScalarMultiplication(g2Point, fr.Modulus()).IsInfinity() {
+			//   panic("not in subgroup")
+			// }
+      // groupOrder := new(big.Int).Mul(fr.Modulus(), G2Cofactor)
+      // log.Printf("\n\nE(𝔽p²) order: %v\n\n", groupOrder)
+      // log.Printf("\n\nG2 cofactor: %v\n\n", G2Cofactor)
+			// if !new(bn254.G2Affine).ScalarMultiplication(curve2Point, groupOrder).IsInfinity() {
+			//   panic("not in subgroup")
+			// }
+
+      g2Point := curve2Point.ClearCofactor(curve2Point)
+
+      return g2Point
+		}
+
+		x.Add(x, one)
+	}
 }

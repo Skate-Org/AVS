@@ -3,7 +3,6 @@ module github.com/Skate-Org/AVS
 go 1.21.8
 
 require (
-	github.com/Layr-Labs/eigenda v0.6.1
 	github.com/Layr-Labs/eigensdk-go v0.1.6
 	github.com/aws/aws-sdk-go-v2 v1.26.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.14

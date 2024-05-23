@@ -5,6 +5,7 @@ import {IStrategy} from "eigenlayer-contracts/src/contracts/interfaces/IStrategy
 import {ISkateAVS} from "./interfaces/ISkateAVS.sol";
 import {IAVSDirectory} from "eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import {IDelegationManager} from "./interfaces/IDelegationManager.sol";
+import {BN254} from "./libraries/BN254.sol";
 
 abstract contract SkateAVSStorage is ISkateAVS {
     StrategyParams[] internal _strategies;
@@ -14,6 +15,8 @@ abstract contract SkateAVSStorage is ISkateAVS {
     uint32 internal _maxOperatorCount;
     bool public _allowlistEnabled;
     uint96 public _minOperatorStake;
+    mapping(address => BN254.G2Point) internal _blsPubKey;
+    bytes32 public constant PUBKEY_REGISTRATION_TYPEHASH = keccak256("BLSPubkey(address operator)");
 
     function strategies() external view override returns (StrategyParams[] memory) {
         return _strategies;
