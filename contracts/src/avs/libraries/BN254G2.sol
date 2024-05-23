@@ -60,14 +60,11 @@ library BN254G2 {
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////// BEGIN G2 operations /////////////////////////////////////
-    
+
     // TODO: math ain't mathing? other funcs likely correct.
     // Fix this to make addG2 works
     function toAffine(G2Jacobian memory pJac) internal view returns (G2Point memory pAff) {
-        if (pJac.Z.isZero()) {
-            pJac.X = [uint256(0), 0];
-            pJac.Y = [uint256(0), 0];
-        } else {
+        if (!pJac.Z.isZero()) {
             uint256[2] memory zInverse = inverse(pJac.Z);
             uint256[2] memory zInverseSquare = square(pJac.Z);
 

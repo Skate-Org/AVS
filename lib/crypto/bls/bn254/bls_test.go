@@ -6,7 +6,7 @@ import (
 
 	"github.com/Skate-Org/AVS/lib/crypto/bls/bn254"
 	libHash "github.com/Skate-Org/AVS/lib/crypto/hash"
-	// gnarkBn254 "github.com/consensys/gnark-crypto/ecc/bn254"
+	gnarkBn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,17 +38,16 @@ func TestUtils(t *testing.T) {
 	// result_g1 := g1.Add(g1, pubKeyG1)
 	// log.Printf("\n\nAdd g1 result: %v\n\n", result_g1.String())
 	//
-	// g2 := bn254.GetG2Generator()
-	// resultg2 := g2.Add(g2, keyPair.PubKey.G2Affine)
-	// log.Printf("\n\nAdd g2 result: \nx=%v\ny=%v\n\n", resultg2.X.String(), resultg2.Y.String())
+	g2 := bn254.GetG2Generator()
+	resultg2 := g2.Add(g2, keyPair.PubKey.G2Affine)
+	log.Printf("\n\nAdd g2 result: \nx=%v\ny=%v\n\n", resultg2.X.String(), resultg2.Y.String())
 	//
-	// g2Jac := new(gnarkBn254.G2Jac).FromAffine(bn254.GetG2Generator())
-	// pubKeyG2Jac := new(gnarkBn254.G2Jac).FromAffine(keyPair.PubKey.G2Affine)
-	// resultG2Jac := g2Jac.AddAssign(pubKeyG2Jac)
-	// log.Printf("\n\nAdd g2Jac result: \nx=%v\ny=%v\nz=%v\n\n", resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String())
-	//
-	// recoveredG2 := new(gnarkBn254.G2Affine).FromJacobian(resultG2Jac)
-	// log.Printf("Add g2Jac recover success?: %v", recoveredG2.X.Cmp(&resultg2.X) == 0 && recoveredG2.Y.Cmp(&resultg2.Y) == 0)
+	g2Jac := new(gnarkBn254.G2Jac).FromAffine(bn254.GetG2Generator())
+	pubKeyG2Jac := new(gnarkBn254.G2Jac).FromAffine(keyPair.PubKey.G2Affine)
+	resultG2Jac := g2Jac.AddAssign(pubKeyG2Jac)
+	log.Printf("\n\nAdd g2Jac result: \nx=%v\ny=%v\nz=%v\n\n", resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String())
+	recoveredG2 := new(gnarkBn254.G2Affine).FromJacobian(resultG2Jac)
+	log.Printf("Add g2Jac recover success?: %v", recoveredG2.X.Cmp(&resultg2.X) == 0 && recoveredG2.Y.Cmp(&resultg2.Y) == 0)
 }
 
 func TestSingleSignature(t *testing.T) {

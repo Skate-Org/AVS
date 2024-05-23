@@ -26,7 +26,7 @@ contract BN254Mock {
         return BN254G2.toAffine(p0);
     }
 
-    function toJacobian(BN254G2.G2Jacobian memory p0) public view returns (BN254G2.G2Point memory) {
-        return BN254G2.toAffine(p0);
+    function toJacobian(BN254G2.G2Point memory p0) public pure returns (BN254G2.G2Jacobian memory) {
+        return BN254G2.toJacobian(p0);
     }
 }
