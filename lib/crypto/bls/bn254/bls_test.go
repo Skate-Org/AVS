@@ -21,7 +21,7 @@ func TestUtils(t *testing.T) {
 	// log.Printf("\n\nPrivate key: %v\n\n", privKey)
 
 	keyPair := bn254.NewKeyPair(privKey)
-	log.Printf("\n\nPublic key G2: %v\n\n", keyPair.PubKey)
+	log.Printf("\n\nExample pubkey G2: %v\n\n", keyPair.PubKey)
 	// pubKeyG1 := bn254.MulByGeneratorG1(privKey)
 	// log.Printf("\n\nPublic key G1: %v\n\n", pubKeyG1)
 
@@ -38,16 +38,16 @@ func TestUtils(t *testing.T) {
 	// result_g1 := g1.Add(g1, pubKeyG1)
 	// log.Printf("\n\nAdd g1 result: %v\n\n", result_g1.String())
 	//
-	g2 := bn254.GetG2Generator()
-	resultg2 := g2.Add(g2, keyPair.PubKey.G2Affine)
-	log.Printf("\n\nAdd g2 result: \nx=%v\ny=%v\n\n", resultg2.X.String(), resultg2.Y.String())
+	// g2 := bn254.GetG2Generator()
+	// resultg2 := g2.Add(g2, keyPair.PubKey.G2Affine)
+	// log.Printf("\n\nAdd g2 result: \nx=%v\ny=%v\n\n", resultg2.X.String(), resultg2.Y.String())
 	//
 	g2Jac := new(gnarkBn254.G2Jac).FromAffine(bn254.GetG2Generator())
 	pubKeyG2Jac := new(gnarkBn254.G2Jac).FromAffine(keyPair.PubKey.G2Affine)
 	resultG2Jac := g2Jac.AddAssign(pubKeyG2Jac)
-	log.Printf("\n\nAdd g2Jac result: \nx=%v\ny=%v\nz=%v\n\n", resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String())
-	recoveredG2 := new(gnarkBn254.G2Affine).FromJacobian(resultG2Jac)
-	log.Printf("Add g2Jac recover success?: %v", recoveredG2.X.Cmp(&resultg2.X) == 0 && recoveredG2.Y.Cmp(&resultg2.Y) == 0)
+	log.Printf("\n\n(g2+pubkeyG2) Jacobian result [for contracts testing]: \nx=%v\ny=%v\nz=%v\n\n", resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String())
+	// recoveredG2 := new(gnarkBn254.G2Affine).FromJacobian(resultG2Jac)
+	// log.Printf("Add g2Jac recover success?: %v", recoveredG2.X.Cmp(&resultg2.X) == 0 && recoveredG2.Y.Cmp(&resultg2.Y) == 0)
 }
 
 func TestSingleSignature(t *testing.T) {
@@ -77,7 +77,7 @@ func TestSingleSignature(t *testing.T) {
 }
 
 func TestAggregatedSignature(t *testing.T) {
-	QUORUM_SIZE := 100
+	QUORUM_SIZE := 10
 	// Message to sign
 	message := "Aggregate BLS!"
 	msgHash := [32]byte(libHash.Keccak256([]byte(message)))
@@ -90,7 +90,7 @@ func TestAggregatedSignature(t *testing.T) {
 	pubKeys := make([]*bn254.G2Point, QUORUM_SIZE)
 	invalidSigs := make([]*bn254.Signature, QUORUM_SIZE)
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < QUORUM_SIZE; i++ {
 		key, err := bn254.GenRandomBlsKeys()
 		assert.Nil(t, err)
 		pubKeys[i] = key.PubKey
@@ -106,35 +106,31 @@ func TestAggregatedSignature(t *testing.T) {
 	aggPubKeys := bn254.AggregatePubKey(pubKeys)
 
 	// NOTE: Should be able to verify QUORUM_SIZE of valid signatures
-  //
+
 	// Scenario 0: sigs are normal
 	valid, err := aggSig.Verify(aggPubKeys, msgHash)
 	assert.Nil(t, err)
 	assert.True(t, valid, "The aggregated signature should be valid for the aggregated key")
 
 	// Scenario 1: sigs order is mixed
-	// invalidSigsArray2 := append(sigs[1:], sigs[0])
-	// invalidSigsArray2 := append(sigs[:99], sigs[99])
-  reorderedSigs := append(sigs[:1], sigs[0])
-  valid2 := bn254.AggregateSignatures(reorderedSigs)
-	invalid2, err := valid2.Verify(aggPubKeys, msgHash)
+	reorderedSigs := append(sigs[1:], sigs[0])
+	aggSig2 := bn254.AggregateSignatures(reorderedSigs)
+	valid2, err := aggSig2.Verify(aggPubKeys, msgHash)
 	assert.Nil(t, err)
-	assert.True(t, invalid2, "The aggregated signature should be valid when sigs are re-ordered")
+	assert.True(t, valid2, "The aggregated signature should be valid when sigs are re-ordered")
 
 	// NOTE: Should detects invalid signatures
-	//
+
 	// Scenario 0: all signatures are invalid
 	invalidAggSig0 := bn254.AggregateSignatures(invalidSigs)
 	invalid0, err := invalidAggSig0.Verify(aggPubKeys, msgHash)
 	assert.Nil(t, err)
 	assert.False(t, invalid0, "The aggregated signature should be invalid when all sigs are invalid")
 
-	// Scenario 1: 1 signatures are invalid
-	invalidSigsArray1 := append(sigs[:99], invalidSigs[0])
-	invalidSigsArray1 = append(invalidSigsArray1, sigs[21:]...)
+	// Scenario 1: 1 signatures is invalid
+	invalidSigsArray1 := append(sigs[:QUORUM_SIZE-1], invalidSigs[0])
 	invalidAggSig1 := bn254.AggregateSignatures(invalidSigsArray1)
 	invalid1, err := invalidAggSig1.Verify(aggPubKeys, msgHash)
 	assert.Nil(t, err)
 	assert.False(t, invalid1, "The aggregated signature should be invalid when 1 sig is invalid")
-
 }

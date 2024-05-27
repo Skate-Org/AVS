@@ -166,7 +166,7 @@ library BN254G2 {
         uint256[2] memory zz = p.Z.square();
 
         // S = 2 * [(p.X+yy)^2 - xx - yyyy]
-        uint256[2] memory S = add(p.X, yy).sub(xx).sub(yyyy).scalar_mul(2);
+        uint256[2] memory S = add(p.X, yy).square().sub(xx).sub(yyyy).scalar_mul(2);
         // M = 3xx
         uint256[2] memory M = scalar_mul(xx, 3);
         uint256[2] memory T = sub(M.square(), S.scalar_mul(2));
@@ -194,12 +194,13 @@ library BN254G2 {
      * ψ(p) = u o π o u⁻¹ where u: E'→E isomorphism from the twist to E
      */
     function psi(G2Jacobian memory point) internal pure returns (G2Jacobian memory result) {
-        uint256[2] memory x = mul([point.X[0], P - point.X[1]], [ENDO_X0, ENDO_X1]);
-        uint256[2] memory y = mul([point.Y[0], P - point.Y[1]], [ENDO_Y0, ENDO_Y1]);
-
-        result.X = x;
-        result.Y = y;
+        // X = conjugate(x) * endo.X
+        result.X = mul([point.X[0], P - point.X[1]], [ENDO_X0, ENDO_X1]);
+        // Y = conjugate(y) * endo.Y
+        result.Y = mul([point.Y[0], P - point.Y[1]], [ENDO_Y0, ENDO_Y1]);
+        // Z = conjugate(Z)
         result.Z[1] = P - point.Z[1];
+        result.Z[0] = point.Z[0];
     }
 
     /**

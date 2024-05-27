@@ -84,56 +84,63 @@ contract BN254Test is Test {
         BN254G2.G2Point memory zero = bn254Mock.addG2(g2.toJacobian(), g2_.toJacobian()).toAffine();
         assert(zero.X[0] == 0 && zero.X[1] == 0 && zero.Y[0] == 0 && zero.Y[1] == 0);
 
-        // BN254G2.G2Point memory result = bn254Mock.addG2(g2.toJacobian(), pubKeyG2.toJacobian()).toAffine();
-        // uint256[2] memory expectedX = [
-        //     5089185281081355630965216039114289061805807966378485977784466132038562598413,
-        //     19185479619893335706385157721662219355785721478713265516367218835785551166058
-        // ];
-        // uint256[2] memory expectedY = [
-        //     609266954259096775064279300199517870991685285436374777840595655246630800772,
-        //     19352729685888935666605530468178106257173769676130225054715042437407307181534
-        // ];
-        // assertEq(result.X[0], expectedX[0]);
-        // assertEq(result.X[1], expectedX[1]);
-        // assertEq(result.Y[0], expectedY[0]);
-        // assertEq(result.Y[1], expectedY[1]);
+        BN254G2.G2Point memory result = bn254Mock.addG2(g2.toJacobian(), pubKeyG2.toJacobian()).toAffine();
+        uint256[2] memory expectedX = [
+            5089185281081355630965216039114289061805807966378485977784466132038562598413,
+            19185479619893335706385157721662219355785721478713265516367218835785551166058
+        ];
+        uint256[2] memory expectedY = [
+            609266954259096775064279300199517870991685285436374777840595655246630800772,
+            19352729685888935666605530468178106257173769676130225054715042437407307181534
+        ];
+        assertEq(result.X[0], expectedX[0]);
+        assertEq(result.X[1], expectedX[1]);
+        assertEq(result.Y[0], expectedY[0]);
+        assertEq(result.Y[1], expectedY[1]);
     }
 
-    // function testScalarMulG2() public view {
-    //     BN254G2.G2Point memory g2 = BN254G2.generatorG2();
-    //
-    //     // Multiply by group order
-    //     BN254G2.G2Point memory zero = bn254Mock.scalarMulG2(g2.toJacobian(), BN254.R).toAffine();
-    //     assert(zero.X[0] == 0 && zero.X[1] == 0 && zero.Y[0] == 0 && zero.Y[1] == 0);
-    //
-    //     BN254G2.G2Point memory result = bn254Mock.scalarMulG2(g2.toJacobian(), blsPrivateKey).toAffine();
-    //     assertEq(result.X[0], pubKeyG2.X[0]);
-    //     assertEq(result.X[1], pubKeyG2.X[1]);
-    //     assertEq(result.Y[0], pubKeyG2.Y[0]);
-    //     assertEq(result.Y[1], pubKeyG2.Y[1]);
-    // }
+    function testScalarMulG2() public view {
+        BN254G2.G2Point memory g2 = BN254G2.generatorG2();
 
-    function testToAffine() public view {
-        BN254G2.G2Jacobian memory pubKeyG2Jac = bn254Mock.toJacobian(pubKeyG2);
-        // BN254G2.G2Jacobian memory pubKeyG2Jac = BN254G2.G2Jacobian(
-        //     [
-        //         3329639083096165885731220919082359124592048864283657592811763527427566306241,
-        //         8806852823229444710244328042456680910008558339241855251396229563951045655138
-        //     ],
-        //     [
-        //         9313001925923743241224391674616694715610801962044656918391441663944101203615,
-        //         6532828922907635986206876418879070648299755993683570467682966769978105914363
-        //     ],
-        //     [
-        //         19942955030888908508699717295835262609524502995259500485011966915941225697003,
-        //         18454188147661245741752119976768248109156097959925982575531255971707286390340
-        //     ]
-        // );
+        // Multiply by group order
+        BN254G2.G2Point memory zero = bn254Mock.scalarMulG2(g2.toJacobian(), BN254.R).toAffine();
+        assert(zero.X[0] == 0 && zero.X[1] == 0 && zero.Y[0] == 0 && zero.Y[1] == 0);
 
-        BN254G2.G2Point memory result = bn254Mock.toAffine(pubKeyG2Jac);
+        BN254G2.G2Point memory result = bn254Mock.scalarMulG2(g2.toJacobian(), blsPrivateKey).toAffine();
         assertEq(result.X[0], pubKeyG2.X[0]);
         assertEq(result.X[1], pubKeyG2.X[1]);
         assertEq(result.Y[0], pubKeyG2.Y[0]);
         assertEq(result.Y[1], pubKeyG2.Y[1]);
+    }
+
+    function testToAffine() public view {
+        BN254G2.G2Jacobian memory pubKeyG2FromAffine = bn254Mock.toJacobian(pubKeyG2);
+
+        BN254G2.G2Point memory result0 = bn254Mock.toAffine(pubKeyG2FromAffine);
+        assertEq(result0.X[0], pubKeyG2.X[0]);
+        assertEq(result0.X[1], pubKeyG2.X[1]);
+        assertEq(result0.Y[0], pubKeyG2.Y[0]);
+        assertEq(result0.Y[1], pubKeyG2.Y[1]);
+
+        BN254G2.G2Jacobian memory pubKeyG2Jac = BN254G2.G2Jacobian(
+            [
+                3329639083096165885731220919082359124592048864283657592811763527427566306241,
+                8806852823229444710244328042456680910008558339241855251396229563951045655138
+            ],
+            [
+                9313001925923743241224391674616694715610801962044656918391441663944101203615,
+                6532828922907635986206876418879070648299755993683570467682966769978105914363
+            ],
+            [
+                19942955030888908508699717295835262609524502995259500485011966915941225697003,
+                18454188147661245741752119976768248109156097959925982575531255971707286390340
+            ]
+        );
+
+        BN254G2.G2Point memory result1 = bn254Mock.toAffine(pubKeyG2Jac);
+        assertEq(result1.X[0], pubKeyG2.X[0]);
+        assertEq(result1.X[1], pubKeyG2.X[1]);
+        assertEq(result1.Y[0], pubKeyG2.Y[0]);
+        assertEq(result1.Y[1], pubKeyG2.Y[1]);
     }
 }
