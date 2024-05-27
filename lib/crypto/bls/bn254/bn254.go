@@ -286,16 +286,16 @@ func hasToG2TryAndIncrement(digest [32]byte) *bn254.G2Affine {
 			// if !new(bn254.G2Affine).ScalarMultiplication(g2Point, fr.Modulus()).IsInfinity() {
 			//   panic("not in subgroup")
 			// }
-      // groupOrder := new(big.Int).Mul(fr.Modulus(), G2Cofactor)
-      // log.Printf("\n\nE(𝔽p²) order: %v\n\n", groupOrder)
-      // log.Printf("\n\nG2 cofactor: %v\n\n", G2Cofactor)
+			// groupOrder := new(big.Int).Mul(fr.Modulus(), G2Cofactor)
+			// log.Printf("\n\nE(𝔽p²) order: %v\n\n", groupOrder)
+			// log.Printf("\n\nG2 cofactor: %v\n\n", G2Cofactor)
 			// if !new(bn254.G2Affine).ScalarMultiplication(curve2Point, groupOrder).IsInfinity() {
 			//   panic("not in subgroup")
 			// }
 
-      g2Point := curve2Point.ClearCofactor(curve2Point)
+			g2Point := curve2Point.ClearCofactor(curve2Point)
 
-      return g2Point
+			return g2Point
 		}
 
 		x.Add(x, one)

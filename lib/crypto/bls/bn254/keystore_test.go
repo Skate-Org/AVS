@@ -48,4 +48,3 @@ func TestBlsKeyCreation(t *testing.T) {
 		})
 	}
 }
-

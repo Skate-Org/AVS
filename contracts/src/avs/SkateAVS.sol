@@ -36,6 +36,7 @@ contract SkateAVS is
     using MessageHashUtils for bytes32;
     using BN254 for BN254.G1Point;
     using BN254 for BN254.G2Point;
+    using BN254 for BN254.G2Jacobian;
 
     uint256 public constant WEIGHTING_DIVISOR = 1e18;
     IAVSDirectory internal immutable _avsDirectory;
@@ -328,18 +329,20 @@ contract SkateAVS is
             revert Errors.QuorumNotReached();
         }
 
-        BN254.G2Point[] memory signedPubKeys = new BN254.G2Point[](signedOperators.length);
+        // BN254.G2Point[] memory signedPubKeys = new BN254.G2Point[](signedOperators.length);
+        BN254.G2Jacobian memory aggPubKeyJac;
 
         for (uint256 i = 0; i < signedOperators.length; i++) {
             address operator = signedOperators[i];
             if (!isOperator(operator)) revert Errors.NotAnOperator();
 
-            signedPubKeys[i] = _blsPubKey[operator];
+            aggPubKeyJac = aggPubKeyJac.addG2(_blsPubKey[operator].toJacobian());
+            // signedPubKeys[i] = _blsPubKey[operator];
         }
 
-        // NOTE: don't need toEthSignedMessageHash because normal call use ECDSA signature =>no risk for collision here.
+        // NOTE: don't need toEthSignedMessageHash because normal call use ECDSA signature => no risk for collision here.
         bytes32 digest = keccak256(abi.encodePacked(taskId, messageData));
-        bool isSignatureValid = BLS.verifyBatchPubKey(aggregatedSignature, signedPubKeys, digest);
+        bool isSignatureValid = BLS.verifySinglePubKey(aggregatedSignature, aggPubKeyJac.toAffine(), digest);
         if (!isSignatureValid) {
             revert Errors.InvalidBLSSignature();
         }

@@ -21,7 +21,9 @@ func TestUtils(t *testing.T) {
 	// log.Printf("\n\nPrivate key: %v\n\n", privKey)
 
 	keyPair := bn254.NewKeyPair(privKey)
-	log.Printf("\n\nExample pubkey G2: %v\n\n", keyPair.PubKey)
+	log.Printf("\nExample pubkey G2: \nx=%v\ny=%v\n\n", keyPair.PubKey.X.String(), keyPair.PubKey.Y.String())
+	z2 := bn254.NewZeroG2Point()
+	log.Printf("\nG2 x inverse: %v\n\n", z2.X.Inverse(&keyPair.PubKey.X))
 	// pubKeyG1 := bn254.MulByGeneratorG1(privKey)
 	// log.Printf("\n\nPublic key G1: %v\n\n", pubKeyG1)
 
@@ -38,16 +40,17 @@ func TestUtils(t *testing.T) {
 	// result_g1 := g1.Add(g1, pubKeyG1)
 	// log.Printf("\n\nAdd g1 result: %v\n\n", result_g1.String())
 	//
-	// g2 := bn254.GetG2Generator()
-	// resultg2 := g2.Add(g2, keyPair.PubKey.G2Affine)
-	// log.Printf("\n\nAdd g2 result: \nx=%v\ny=%v\n\n", resultg2.X.String(), resultg2.Y.String())
 	//
 	g2Jac := new(gnarkBn254.G2Jac).FromAffine(bn254.GetG2Generator())
 	pubKeyG2Jac := new(gnarkBn254.G2Jac).FromAffine(keyPair.PubKey.G2Affine)
 	resultG2Jac := g2Jac.AddAssign(pubKeyG2Jac)
-	log.Printf("\n\n(g2+pubkeyG2) Jacobian result [for contracts testing]: \nx=%v\ny=%v\nz=%v\n\n", resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String())
-	// recoveredG2 := new(gnarkBn254.G2Affine).FromJacobian(resultG2Jac)
-	// log.Printf("Add g2Jac recover success?: %v", recoveredG2.X.Cmp(&resultg2.X) == 0 && recoveredG2.Y.Cmp(&resultg2.Y) == 0)
+	log.Printf(
+		"\n(g2+pubkeyG2) Jacobian result [for contracts testing]: \nx=%v\ny=%v\nz=%v\n\n",
+		resultG2Jac.X.String(), resultG2Jac.Y.String(), resultG2Jac.Z.String(),
+	)
+
+	resultG2 := bn254.NewZeroG2Point().FromJacobian(resultG2Jac)
+	log.Printf("\n(g2+pubkeyG2) result: \nx=%v\ny=%v\n\n", resultG2.X.String(), resultG2.Y.String())
 }
 
 func TestSingleSignature(t *testing.T) {

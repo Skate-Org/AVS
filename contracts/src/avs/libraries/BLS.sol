@@ -27,8 +27,9 @@ library BLS {
         return valid;
     }
 
-    // NOTE: on-chain point addition for G2 cost ~23k comparing to 37k gas using this pre-compiled.
-    // => Fix BN254G2 to further optimize (later)
+    // NOTE: This function is inefficient, DO NOT USE. For testing reference only.
+    // on-chain point addition for G2 cost ~23.6k + 3k (Jacobian transform) comparing to 37k gas using this pre-compiled.
+    // => using G2 addition will save 10k gas per operators + gas for payload size
     function verifyBatchPubKey(BN254.G1Point memory aggSignature, BN254.G2Point[] memory pubKeys, bytes32 message) internal view returns (bool) {
         BN254.G1Point memory messageG1 = BN254.hashToG1(message);
         uint256 inputSize = 6 + 6 * pubKeys.length;

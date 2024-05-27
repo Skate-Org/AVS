@@ -22,7 +22,7 @@ type encryptedBLSKeyJSONV3 struct {
 func (k *BLSKey) SaveToFile(path string, password string) error {
 	sk32Bytes := k.PrivKey.Bytes()
 	cryptoStruct, err := keystore.EncryptDataV3(
-    sk32Bytes[:],
+		sk32Bytes[:],
 		[]byte(password),
 		keystore.StandardScryptN,
 		keystore.StandardScryptP,

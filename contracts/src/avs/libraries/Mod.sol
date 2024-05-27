@@ -10,7 +10,7 @@ library Mod {
      * modExp Calculates the modular exponent of base by exp over modulo n
      * From https://github.com/HarryR/solcrypto/blob/master/contracts/altbn128.sol#L111
      */
-    function modExp(uint256 base, uint256 exp, uint256 mod) internal view returns (uint256 retval) {
+    function modExp(uint256 base, uint256 exp, uint256 mod) internal view returns (uint256) {
         bool success;
         uint256[1] memory output;
         uint256[6] memory input;
@@ -30,5 +30,10 @@ library Mod {
         }
         require(success, "Mod.modExp: 0x5 call failed");
         return output[0];
+    }
+
+    function modInverse(uint256 base, uint256 mod) internal view returns (uint256) {
+        // NOTE: this can be optimized: https://github.com/pornin/bingcd/blob/main/doc/bingcd.pdf
+        return modExp(base, mod - 2, mod);
     }
 }
