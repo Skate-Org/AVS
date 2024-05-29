@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// 
+//
 // G1 operations adapted from:
 // + HarryR: https://github.com/HarryR/solcrypto/blob/master/contracts/altbn128.sol (MIT license):
 // + LayrLabs Inc.: https://github.com/Layr-Labs/eigenlayer-middleware/blob/fb313de7ccfa8b4391e51a3c20b213aab2d035b7/src/libraries/BN254.sol (MIT license)
@@ -610,11 +610,12 @@ library BN254 {
             return result;
         }
 
+        uint256[2] memory base = x; // This will hold the changing base x, x^2, x^4, x^8, etc.
         while (_exp != 0) {
             if ((_exp & 1) != 0) {
-                result = result.square();
+                result = result.mul(base);
             }
-            result = result.mul(x);
+            base = base.square();
             _exp >>= 1;
         }
     }
