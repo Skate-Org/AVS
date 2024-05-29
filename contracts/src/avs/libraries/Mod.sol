@@ -32,8 +32,11 @@ library Mod {
         return output[0];
     }
 
-    function modInverse(uint256 base, uint256 mod) internal view returns (uint256) {
+    /**
+     * modInverse Calculates the modular inverse of num over the prime field P.
+     */
+    function modInverse(uint256 num, uint256 P) internal view returns (uint256) {
         // NOTE: this can be optimized: https://github.com/pornin/bingcd/blob/main/doc/bingcd.pdf
-        return modExp(base, mod - 2, mod);
+        return modExp(num, P - 2, P);
     }
 }
