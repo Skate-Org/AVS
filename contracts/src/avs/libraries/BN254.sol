@@ -457,7 +457,7 @@ library BN254 {
         // p2= ψ²(p * x)
         G2Jacobian memory point2 = psi(psi(point0));
         // p3= ψ3(p)
-        G2Jacobian memory point3 = psi(psi(p));
+        G2Jacobian memory point3 = psi(psi(psi(p)));
 
         return addG2(point0, addG2(point1, addG2(point2, point3)));
     }
