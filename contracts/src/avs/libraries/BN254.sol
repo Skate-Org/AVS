@@ -35,7 +35,7 @@ library BN254 {
 
     /// points on elliptic curve over extension field 𝔽p²
     /// Encoding of field elements is: X[0] + X[1] * i
-    /// WARNING: this is reverse of the encoding EIP-197 conventinon (which doesn't follow normal convention).
+    /// WARNING: this is reverse of the encoding used in EIP-197 (which doesn't follow normal convention).
     /// https://eips.ethereum.org/EIPS/eip-197#encoding, specifically:
     /// "Elements a * i + b of F_p^2 are encoded as two elements of F_p, (a, b)."
     struct G2Point {
