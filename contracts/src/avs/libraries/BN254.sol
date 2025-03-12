@@ -41,7 +41,12 @@ library BN254 {
         uint256[2] Y;
     }
 
-    function pairing(G1Point memory a1, G2Point memory a2, G1Point memory b1, G2Point memory b2) internal view returns (bool) {
+    function pairing(
+        G1Point memory a1,
+        G2Point memory a2,
+        G1Point memory b1,
+        G2Point memory b2
+    ) internal view returns (bool) {
         uint256[] memory input = new uint256[](12);
         // uint256[12] memory input;
 
@@ -530,7 +535,10 @@ library BN254 {
      * @notice E2 multiplication
      */
     function mul(uint256[2] memory x, uint256[2] memory y) internal pure returns (uint256[2] memory) {
-        return [_submodP(mulmod(x[0], y[0], P), mulmod(x[1], y[1], P)), addmod(mulmod(x[0], y[1], P), mulmod(x[1], y[0], P), P)];
+        return [
+            _submodP(mulmod(x[0], y[0], P), mulmod(x[1], y[1], P)),
+            addmod(mulmod(x[0], y[1], P), mulmod(x[1], y[0], P), P)
+        ];
     }
 
     /**

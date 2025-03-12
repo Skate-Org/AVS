@@ -92,8 +92,14 @@ library BLS12_381 {
     }
 
     function negGeneratorG1() internal pure returns (G1Point memory nG1) {
-        nG1.X = [0x17f1d3a73197d7942695638c4fa9ac0f, 0xc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb];
-        nG1.Y = [0x114d1d6855d545a8aa7d76c8cf2e21f2, 0x67816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca];
+        nG1.X = [
+            0x17f1d3a73197d7942695638c4fa9ac0f,
+            0xc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb
+        ];
+        nG1.Y = [
+            0x114d1d6855d545a8aa7d76c8cf2e21f2,
+            0x67816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca
+        ];
     }
 
     /**

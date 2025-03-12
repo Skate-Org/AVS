@@ -17,11 +17,17 @@ import {BN254} from "./BN254.sol";
  */
 library BLS {
     using BN254 for BN254.G1Point;
+    using BN254 for BN254.G2Point;
+    using BN254 for BN254.G2Jacobian;
 
     // Verify the aggregated BLS signature:
     //     e(Hash(message), pubKeyG2) = e(signature, g2)
     // <=> e(Hash(message), pubKeyG2) * e(signature, -g2) = 1
-    function verifySinglePubKey(BN254.G1Point memory signature, BN254.G2Point memory pubKey, bytes32 message) internal view returns (bool) {
+    function verifySinglePubKey(
+        BN254.G1Point memory signature,
+        BN254.G2Point memory pubKey,
+        bytes32 message
+    ) internal view returns (bool) {
         BN254.G1Point memory messageG1 = BN254.hashToG1(message);
         bool valid = BN254.pairing(messageG1, pubKey, signature, BN254.negGeneratorG2());
         return valid;
@@ -30,32 +36,29 @@ library BLS {
     // NOTE: This function is inefficient, DO NOT USE. For testing reference only.
     // on-chain point addition for G2 cost ~23.6k + 3k (Jacobian transform) comparing to 37k gas using this pre-compiled.
     // => using G2 addition will save 10k gas per operators + gas for payload size
-    function verifyBatchPubKey(BN254.G1Point memory aggSignature, BN254.G2Point[] memory pubKeys, bytes32 message) internal view returns (bool) {
+    function verifyBatchPubKey(
+        BN254.G1Point memory aggSignature,
+        BN254.G2Point[] memory pubKeys,
+        bytes32 message
+    ) internal view returns (bool) {
         BN254.G1Point memory messageG1 = BN254.hashToG1(message);
-        uint256 inputSize = 6 + 6 * pubKeys.length;
 
-        uint256[] memory input = new uint256[](inputSize);
-        input[0] = aggSignature.X;
-        input[1] = aggSignature.Y;
-        input[2] = BN254.G2x1;
-        input[3] = BN254.G2x0;
-        input[4] = BN254.nG2y1;
-        input[5] = BN254.nG2y0;
+        require(pubKeys.length > 0, "Invalid pubKey set");
+        BN254.G2Jacobian memory aggregatedPubKey = pubKeys[0].toJacobian();
 
-        for (uint i = 1; i <= pubKeys.length; i++) {
-            input[i * 6] = messageG1.X;
-            input[i * 6 + 1] = messageG1.Y;
-            input[i * 6 + 2] = pubKeys[i - 1].X[1];
-            input[i * 6 + 3] = pubKeys[i - 1].X[0];
-            input[i * 6 + 4] = pubKeys[i - 1].Y[1];
-            input[i * 6 + 5] = pubKeys[i - 1].Y[0];
+        for (uint256 i = 1; i < pubKeys.length; i++) {
+            aggregatedPubKey = aggregatedPubKey.addG2(pubKeys[i].toJacobian());
         }
 
-        return BN254._ecPairing(input);
+        bool valid = BN254.pairing(messageG1, aggregatedPubKey.toAffine(), aggSignature, BN254.negGeneratorG2());
+        return valid;
     }
 
     // NOTE: This function should only be used as an utility for testing
-    function signMessage(uint256 blsPrivateKey, bytes32 message) internal view returns (BN254.G1Point memory signature) {
+    function signMessage(
+        uint256 blsPrivateKey,
+        bytes32 message
+    ) internal view returns (BN254.G1Point memory signature) {
         if (blsPrivateKey >= BN254.R) {
             revert("Private Key must be within Fp group order R");
         }

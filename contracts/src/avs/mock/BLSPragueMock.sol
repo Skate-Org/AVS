@@ -26,6 +26,14 @@ contract BLSPragueMock {
         return BLS12_381.hashMessageToG2(message);
     }
 
+    function mockVerifySinglePubKey(
+        BLS12_381.G1Point memory pubKey,
+        BLS12_381.G2Point memory signature,
+        bytes memory message
+    ) public returns (bool) {
+        return BLS_Prague.verifySinglePubKey(pubKey, signature, message);
+    }
+
     function mockVerifyBatchPubKey(
         BLS12_381.G1Point[] memory pubKeys,
         BLS12_381.G2Point memory aggSignature,

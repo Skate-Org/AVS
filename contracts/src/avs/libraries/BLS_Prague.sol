@@ -30,7 +30,6 @@ library BLS_Prague {
         BLS12_381.G1Point[] memory g1s = new BLS12_381.G1Point[](2);
         g1s[0] = pubKey;
         g1s[1] = BLS12_381.negGeneratorG1();
-        BLS12_381.negGeneratorG1().addG1(pubKey);
 
         BLS12_381.G2Point[] memory g2s = new BLS12_381.G2Point[](2);
         g2s[0] = BLS12_381.hashMessageToG2(message);
@@ -58,11 +57,13 @@ library BLS_Prague {
         BLS12_381.G2Point memory aggSignature,
         bytes memory message
     ) internal view returns (bool valid) {
-        BLS12_381.G1Point[] memory g1s = new BLS12_381.G1Point[](2);
-        BLS12_381.G1Point memory aggregatedPubKey = BLS12_381.generatorG1();
-        for (uint256 i = 0; i < pubKeys.length; i++) {
+        require(pubKeys.length > 0, "Invalid pubKey set");
+
+        BLS12_381.G1Point memory aggregatedPubKey = pubKeys[0];
+        for (uint256 i = 1; i < pubKeys.length; i++) {
             aggregatedPubKey = aggregatedPubKey.addG1(pubKeys[i]);
         }
+        BLS12_381.G1Point[] memory g1s = new BLS12_381.G1Point[](2);
         g1s[0] = aggregatedPubKey;
         g1s[1] = BLS12_381.negGeneratorG1();
 
@@ -73,7 +74,10 @@ library BLS_Prague {
         valid = BLS12_381.pairing(g1s, g2s);
     }
 
-    function signMessage(uint256 blsPrivateKey, bytes memory message) internal view returns (BLS12_381.G2Point memory signature) {
+    function signMessage(
+        uint256 blsPrivateKey,
+        bytes memory message
+    ) internal view returns (BLS12_381.G2Point memory signature) {
         if (blsPrivateKey >= BLS12_381.R) {
             revert("Private Key must be within Fp group order R");
         }
