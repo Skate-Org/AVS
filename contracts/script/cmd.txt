@@ -1,5 +1,15 @@
 ## verify
 
+# BLSMock
+forge verify-contract 0xc4A3A9e357A59c1Ca894B3Ebbdd00d88B5bB3A5c src/avs/mock/BLSMock.sol:BLSMock \
+--chain 17000 --etherscan-api-key 6ZURTHXIUTBSNJDGKAI76EP35B3ZMWIYIU \
+--compiler-version 0.8.28+commit.7893614a
+
+# BLSPragueMock
+forge verify-contract 0x8c6E8631AF90312d88Ca68738A340f3101937235 src/avs/mock/BLSPragueMock.sol:BLSPragueMock \
+--chain 17000 --etherscan-api-key 6ZURTHXIUTBSNJDGKAI76EP35B3ZMWIYIU \
+--compiler-version 0.8.28+commit.7893614a
+
 # SkateGateway
 forge verify-contract 0x3EFb67B7DaB42d347C3546b6c10579e9C5F14c3f src/gateway/SkateGateway.sol:SkateGateway \
 --constructor-args $(cast abi-encode "constructor(address)" 0x786775c9ecB916bd7f5a59c150491871fCfCEe86) \
@@ -11,8 +21,16 @@ forge verify-contract 0x37D191232D6655D82a7ae6159E8d9D55F303E6B2 src/skate/Skate
 --verifier-url $NOLLIE_TESTNET_EXPLORER --verifier blockscout
 
 ---------------------
+## benchmark
+
+# BLS Cancun vs Prague
+forge script script/BLS_benchmark.s.sol:BLSBenchmark --rpc-url $HOLESKY_RPC --broadcast
 
 ## deploy
+
+# BLS deployments
+forge script script/deployBLS.s.sol:DeployBLSMock --rpc-url $HOLESKY_RPC \
+--broadcast --verify -vvvv
 
 # SkateGateway
 forge script script/deploy.s.sol:DeployGateway --rpc-url $ARB_SEPOLIA_RPC \

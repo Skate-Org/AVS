@@ -2,9 +2,9 @@
 pragma solidity ^0.8.28;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BLS12_381} from "../../../src/avs/libraries/BLS12_381.sol";
-import {BLSPragueMock} from "../../../src/avs/mock/BLSPragueMock.sol";
-import {BLS_Prague} from "../../../src/avs/libraries/BLS_Prague.sol";
+import {BLS12_381} from "src/avs/libraries/BLS12_381.sol";
+import {BLSPragueMock} from "src/avs/mock/BLSPragueMock.sol";
+import {BLS_Prague} from "src/avs/libraries/BLS_Prague.sol";
 
 contract BLSPragueTest is Test {
     using BLS12_381 for BLS12_381.G1Point;
@@ -58,7 +58,7 @@ contract BLSPragueTest is Test {
     }
 
     function testVerifyBatch() public view {
-        bytes memory message = "A Skate data batch";
+        bytes memory message = "BLS_Signature";
 
         // Aggregate signatures from all 10 keys
         BLS12_381.G2Point memory aggSignature = BLS_Prague.signMessage(blsPrivateKey0, message);
@@ -90,7 +90,7 @@ contract BLSPragueTest is Test {
     }
 
     function testVerifySingle() public view {
-        bytes memory message = "A Skate data batch";
+        bytes memory message = "BLS_Signature";
 
         BLS12_381.G2Point memory signature = BLS_Prague.signMessage(blsPrivateKey0, message);
         bool valid = blsPragueMock.verifySinglePubKey(pubKey0, signature, message);
@@ -98,8 +98,7 @@ contract BLSPragueTest is Test {
     }
 
     function testHashMessage() public view {
-        bytes memory message = "A Skate data batch";
+        bytes memory message = "BLS_Signature";
         blsPragueMock.hashMessageToG2(message);
     }
 }
-

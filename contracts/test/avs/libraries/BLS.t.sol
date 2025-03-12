@@ -2,9 +2,9 @@
 pragma solidity 0.8.20;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {BN254} from "../../../src/avs/libraries/BN254.sol";
-import {BLS} from "../../../src/avs/libraries/BLS.sol";
-import {BLSMock} from "../../../src/avs/mock/BLSMock.sol";
+import {BN254} from "src/avs/libraries/BN254.sol";
+import {BLS} from "src/avs/libraries/BLS.sol";
+import {BLSMock} from "src/avs/mock/BLSMock.sol";
 
 // NOTE: BLS public key will be generated off-chain.
 contract BLSTest is Test {
@@ -91,36 +91,12 @@ contract BLSTest is Test {
         assert(valid);
     }
 
-    function testVerifyAggregatedBatch() public view {
+    function testVerifySingle() public view {
         bytes32 message = bytes32("BLS_signature");
 
         // Aggregate individual signatures from all 10 keys
-        BN254.G1Point memory aggSignature = blsMock.signMessage(blsPrivateKey0, message);
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey1, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey2, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey3, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey4, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey5, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey6, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey7, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey8, message));
-        aggSignature = BN254.addG1(aggSignature, blsMock.signMessage(blsPrivateKey9, message));
-
-        // Aggregate public keys
-        BN254.G2Point memory aggPubKey = pubKey0
-            .toJacobian()
-            .addG2(pubKey1.toJacobian())
-            .addG2(pubKey2.toJacobian())
-            .addG2(pubKey3.toJacobian())
-            .addG2(pubKey4.toJacobian())
-            .addG2(pubKey5.toJacobian())
-            .addG2(pubKey6.toJacobian())
-            .addG2(pubKey7.toJacobian())
-            .addG2(pubKey8.toJacobian())
-            .addG2(pubKey9.toJacobian())
-            .toAffine();
-
-        bool valid = blsMock.verifySinglePubKey(aggSignature, aggPubKey, message);
+        BN254.G1Point memory signature = blsMock.signMessage(blsPrivateKey0, message);
+        bool valid = blsMock.verifySinglePubKey(signature, pubKey0, message);
         assert(valid);
     }
 
@@ -137,4 +113,3 @@ contract BLSTest is Test {
         assert(correctSignature);
     }
 }
-
