@@ -57,7 +57,7 @@ library BLS {
     // NOTE: This function should only be used as an utility for testing
     function signMessage(uint256 blsPrivateKey, bytes32 message) internal view returns (BN254.G1Point memory signature) {
         if (blsPrivateKey >= BN254.R) {
-            revert("BLS.signMessage: Key must in Fr group");
+            revert("Private Key must be within Fp group order R");
         }
 
         BN254.G1Point memory messageG1 = BN254.hashToG1(message);

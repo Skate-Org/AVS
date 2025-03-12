@@ -91,7 +91,7 @@ contract SkateAVSTest is Test {
     error OwnableUnauthorizedAccount(address);
 
     function setUp() external {
-        vm.createSelectFork(vm.rpcUrl("https://eth-mainnet.g.alchemy.com/v2/Kc1-RaFsfCaZwuK0HpYO7QE07jaZZnfv"));
+        vm.createSelectFork(vm.rpcUrl("https://rpc.ankr.com/eth"));
         ISkateAVS.StrategyParams[] memory strategies = new ISkateAVS.StrategyParams[](1);
         strategies[0] = ISkateAVS.StrategyParams(strategyParam.strategy, strategyParam.multiplier);
 

@@ -16,15 +16,13 @@ import {Mod} from "./Mod.sol";
  *
  * @title Library for operations on the BN254 elliptic curve
  * @author Skate Organization
- *
- * @dev Operations on 𝔽p² curve, or in G2 subgroup, e.g. add, mul, etc. should also done off-chain
  */
 library BN254 {
     using BN254 for BN254.G1Point;
 
     // modulus for the underlying field 𝔽p of the elliptic curve
     uint256 internal constant P = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
-    // modulus for the underlying field 𝔽r of the elliptic curve
+    // Order of the field 𝔽p
     uint256 internal constant R = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     // points on elliptic curve over field 𝔽p
